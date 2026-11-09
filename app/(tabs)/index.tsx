@@ -1,0 +1,160 @@
+import * as Haptics from 'expo-haptics';
+import { useMemo } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { CUP_OZ } from '../../src/config';
+import { bestStreak, countsByDay, currentStreak, lastNDays } from '../../src/domain/streaks';
+import { dateKey, parseDateKey } from '../../src/domain/time';
+import { useLog } from '../../src/state/logStore';
+import { useSettings } from '../../src/state/settingsStore';
+import { Card, SectionTitle } from '../../src/ui/components';
+import { ProgressRing } from '../../src/ui/ProgressRing';
+import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
+import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { useNow } from '../../src/ui/useNow';
+
+const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+export default function TodayScreen() {
+  const insets = useSafeAreaInsets();
+  const now = useNow(60_000);
+  const goal = useSettings((s) => s.dailyGoal);
+  const { entries, goalByDay, logCup, undoLastToday } = useLog();
+
+  const stats = useMemo(() => {
+    const counts = countsByDay(entries);
+    return {
+      today: counts[dateKey(now)] ?? 0,
+      streak: currentStreak(counts, goalByDay, goal, now),
+      best: bestStreak(counts, goalByDay, goal),
+      week: lastNDays(7, counts, goalByDay, goal, now),
+    };
+  }, [entries, goalByDay, goal, now]);
+
+  const met = stats.today >= goal;
+
+  const onLog = () => {
+    logCup(goal);
+    if (Platform.OS !== 'web') {
+      const feedback =
+        stats.today + 1 === goal
+          ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+          : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      feedback.catch(() => {});
+    }
+  };
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
+    >
+      <Text style={type.title}>Today</Text>
+
+      <View style={styles.ringWrap}>
+        <ProgressRing progress={stats.today / goal}>
+          <Text style={styles.count} accessibilityLabel={`${stats.today} of ${goal} cups today`}>
+            {stats.today}
+          </Text>
+          <Text style={type.caption}>of {goal} cups</Text>
+          <Text style={[type.caption, { marginTop: 2 }]}>{stats.today * CUP_OZ} oz</Text>
+        </ProgressRing>
+        {met ? <Text style={styles.metText}>Goal reached. Nice work! 🎉</Text> : null}
+      </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Log a cup of water"
+        onPress={onLog}
+        style={({ pressed }) => [styles.logButton, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }]}
+      >
+        <Text style={styles.logButtonText}>+1 cup 💧</Text>
+      </Pressable>
+      {stats.today > 0 ? (
+        <Text accessibilityRole="button" onPress={() => undoLastToday()} style={styles.undo}>
+          Undo last cup
+        </Text>
+      ) : null}
+
+      <SectionTitle>Reminders</SectionTitle>
+      <Card style={{ gap: spacing.md }}>
+        <ReminderStatus />
+        <PauseControls />
+      </Card>
+
+      <SectionTitle>Streak</SectionTitle>
+      <Card style={styles.streakRow}>
+        <View style={styles.streakItem}>
+          <Text style={styles.streakValue}>🔥 {stats.streak}</Text>
+          <Text style={type.caption}>day streak</Text>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.streakItem}>
+          <Text style={styles.streakValue}>{stats.best}</Text>
+          <Text style={type.caption}>best streak</Text>
+        </View>
+      </Card>
+
+      <SectionTitle>Last 7 days</SectionTitle>
+      <Card>
+        <View style={styles.week}>
+          {stats.week.map((d) => {
+            const fill = Math.min(1, d.count / d.goal);
+            return (
+              <View
+                key={d.key}
+                style={styles.dayCol}
+                accessible
+                accessibilityLabel={`${parseDateKey(d.key).toDateString()}: ${d.count} of ${d.goal} cups`}
+              >
+                <Text style={[type.caption, { fontSize: 11 }]}>{d.count}</Text>
+                <View style={styles.barTrack}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      { height: `${Math.max(fill * 100, d.count > 0 ? 6 : 0)}%`, backgroundColor: d.met ? colors.success : colors.primary },
+                    ]}
+                  />
+                </View>
+                <Text style={[type.caption, d.key === dateKey(now) && { color: colors.text, fontWeight: '700' }]}>
+                  {WEEKDAY[parseDateKey(d.key).getDay()]}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </Card>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  ringWrap: { alignItems: 'center', marginVertical: spacing.xl },
+  count: { fontSize: 56, fontWeight: '800', color: colors.text, lineHeight: 62 },
+  metText: { marginTop: spacing.md, color: colors.success, fontWeight: '600', fontSize: 16 },
+  logButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg + 2,
+    alignItems: 'center',
+  },
+  logButtonText: { color: colors.white, fontSize: 20, fontWeight: '700' },
+  undo: { textAlign: 'center', color: colors.primary, marginTop: spacing.md, fontSize: 15, padding: spacing.xs },
+  streakRow: { flexDirection: 'row', alignItems: 'center' },
+  streakItem: { flex: 1, alignItems: 'center' },
+  streakValue: { fontSize: 26, fontWeight: '700', color: colors.text },
+  divider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', backgroundColor: colors.border },
+  week: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  dayCol: { alignItems: 'center', flex: 1, gap: 4 },
+  barTrack: {
+    width: 18,
+    height: 80,
+    borderRadius: 9,
+    backgroundColor: colors.primarySoft,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  barFill: { width: '100%', borderRadius: 9 },
+});
