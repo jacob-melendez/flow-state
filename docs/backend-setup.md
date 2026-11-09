@@ -1,0 +1,134 @@
+# Backend setup (Supabase)
+
+This guide connects Flow State to your Supabase project so students can sign in with their Stanford email and back up their water log. It takes about 20 minutes. Without these steps, the app still works fully offline, just without accounts.
+
+You'll need:
+- the Supabase project you created;
+- this repository on your Mac;
+- a phone with the app running (Expo Go is fine).
+
+## 1. Point the app at your project
+
+1. In the Supabase dashboard, open your project, then **Project Settings → API**, or click **Connect** at the top.
+2. Copy the **Project URL** and the **publishable key**, which starts with `sb_publishable_`. Older projects call it the **anon public** key; that works too.
+   - **Don't** use the *secret* or *service_role* key; it bypasses all security.
+3. In the repository folder, create your local settings file:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+4. Open `.env.local` and paste in the two values:
+
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+   EXPO_PUBLIC_SUPABASE_KEY=sb_publishable_xxxxxxxxxxxx
+   ```
+
+5. Restart the dev server so it picks up the file (`Ctrl+C`, then `npx expo start`). An **Account** section now appears at the top of the app's Settings tab.
+
+`.env.local` is ignored by git, so each teammate creates their own. The publishable key is designed to ship inside the app; the database's access rules (row-level security) protect each student's data.
+
+## 2. Create the database tables
+
+1. In the dashboard, open **SQL Editor → New query**.
+2. Open `supabase/migrations/20261110000000_accounts_sync.sql` from this repository, copy **all** of it, paste it into the editor, and click **Run**. You should see "Success. No rows returned".
+3. Check **Table Editor**. You should now see `profiles`, `drink_entries` and `daily_goals`, each marked as protected by RLS.
+
+The script can safely be run more than once. It:
+- creates the tables;
+- turns on row-level security, so each student can only see their own rows;
+- **only allows `@stanford.edu` emails** to create accounts, enforced in the database;
+- keeps the newest change when two phones edit the same thing;
+- adds the `delete_my_account` function that the app's "Delete account" button uses.
+
+<details>
+<summary>Prefer the command line? Use the Supabase CLI instead.</summary>
+
+```bash
+npx supabase login
+```
+
+```bash
+npx supabase link --project-ref YOUR_PROJECT_REF
+```
+
+```bash
+npx supabase db push
+```
+
+`YOUR_PROJECT_REF` is the part of the Project URL before `.supabase.co`.
+</details>
+
+## 3. Make sign-in emails contain a 6-digit code
+
+By default Supabase emails a *link*. Flow State asks for a *code* instead, because it's easier on a phone and works with iOS code autofill.
+
+1. Go to **Authentication → Sign In / Providers**. Make sure **Email** is enabled and **Allow new users to sign up** is on.
+2. Go to **Authentication → Emails → Templates**.
+3. Edit the **Magic Link** template. Replace its body with something like this:
+
+   ```html
+   <h2>Your Flow State code</h2>
+   <p>Enter this code in the app to sign in:</p>
+   <p style="font-size: 32px; font-weight: bold; letter-spacing: 6px;">{{ .Token }}</p>
+   <p>It expires in 1 hour. If you didn't request it, you can ignore this email.</p>
+   ```
+
+   Subject: `Your Flow State sign-in code`
+4. Do the same for the **Confirm signup** template. New students receive this one the first time they sign in.
+5. Make sure neither template contains `{{ .ConfirmationURL }}`. The app doesn't use links.
+
+If the code length setting is offered (Authentication → Providers → Email → *Email OTP length*), keep it at **6**.
+
+## 4. Set up an email sender (before real students use it)
+
+Supabase's built-in email is only for testing. It sends a **few emails per hour**, and only to addresses of your project's team members. Before inviting students, connect a real email service. [Resend](https://resend.com) is a simple option with a free tier (3,000 emails/month):
+
+1. Create a Resend account.
+2. Verify a sending domain you control. Resend shows the DNS records to add.
+3. Create an API key in Resend.
+4. In Supabase, go to **Authentication → Emails → SMTP Settings**, turn on **Custom SMTP**, and enter:
+
+   | Field | Value |
+   | --- | --- |
+   | Host | `smtp.resend.com` |
+   | Port | `465` |
+   | Username | `resend` |
+   | Password | your Resend API key |
+   | Sender email | e.g. `no-reply@yourdomain.org` |
+   | Sender name | `Flow State` |
+
+5. Under **Authentication → Rate Limits**, raise *emails per hour* to fit your launch, e.g. 100.
+
+Any SMTP provider works (SendGrid, Postmark, Amazon SES, …). Stanford-hosted options would need University IT.
+
+## 5. Test it
+
+**Mail delivery.** On your phone, open the app, go to **Settings → Account → Sign in**, and enter your `@stanford.edu` address. Check that the email arrives, including your spam / quarantine folder. Stanford's mail filters sometimes hold new senders. If emails land in spam, ask the sender service to help with domain authentication (SPF/DKIM), which Resend sets up for you.
+
+**Checklist:**
+1. A non-Stanford email (e.g. Gmail) is refused with "Only @stanford.edu email addresses can sign up."
+2. A Stanford email gets a code; entering it signs you in and asks for a display name.
+3. Log a few cups. Settings shows "Backed up just now". In the dashboard's Table Editor, rows appear in `drink_entries`.
+4. Delete the app, reinstall it (or use a second phone), and sign in with the same email. Your cups and goal come back.
+5. With two phones signed in, log on one and open the app on the other. The count updates.
+6. Settings → Account → **Delete account** removes your rows from all three tables.
+
+## Troubleshooting
+
+| Problem | Fix |
+| --- | --- |
+| No Account section in Settings | `.env.local` is missing or misnamed, or the dev server wasn't restarted after creating it. |
+| The email contains a link instead of a code | Edit **both** the *Magic Link* and *Confirm signup* templates (step 3). |
+| "Too many attempts" | Supabase rate limits; wait a minute, or raise them under Authentication → Rate Limits. |
+| Emails never arrive | You're still on Supabase's built-in email (step 4), or Stanford's filter quarantined it. |
+| "Something went wrong" on sign-in | Check **Authentication → Logs** in the dashboard; make sure the SQL script ran (step 2). |
+| "Delete account" fails | Make sure the SQL script ran completely; it creates `delete_my_account`. |
+| Sign-in works but nothing backs up | Check **Database → Logs** for permission errors; re-run the SQL script. |
+
+## For developers
+
+- **Database tests:** `npm run test:db` runs the migration in an in-process Postgres (PGlite) with a stand-in for Supabase's `auth` schema (`supabase/tests/auth-stub.sql`). They check the Stanford-only rule, row-level security, newest-wins, and account deletion. Add a test there whenever you change the SQL.
+- **Schema changes:** add a **new** file in `supabase/migrations/` (don't edit one that has already run), run it in each project, and update the tests.
+- **How the app syncs** is described in `README.md` → *Accounts & sync*.

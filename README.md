@@ -4,7 +4,7 @@ SENSA Impact Labs Fall 2026, Health & Wellness Group (Stanford Flow State). This
 
 Flow State reminds Stanford students to drink water every **15 minutes, 30 minutes or 1 hour** during the hours they choose. Students can log cups toward a daily goal and build streaks.
 
-**Version 1 is entirely on-device:** no accounts, no server, no analytics. Settings and the water log never leave the phone.
+The app works fully offline. Students can optionally **sign in with their Stanford email** to back up their water log and use it on more than one phone. Reminder settings and calculator answers never leave the phone. Version 1 (tag `v1.0.0`) was entirely on-device.
 
 ## Features
 
@@ -17,13 +17,15 @@ Flow State reminds Stanford students to drink water every **15 minutes, 30 minut
 - **Pause**: for 1 hour, 2 hours, or the rest of today. The Settings switch turns reminders off entirely.
 - **Onboarding**: interval, then active hours, then goal, then the notification permission prompt.
 - **Test reminder**: Settings → "Send a test reminder" fires one 10 seconds later.
+- **Accounts & backup (optional)**: sign in with a 6-digit code emailed to a `@stanford.edu` address. The water log and goal sync across phones, and Settings → Account offers sign out and delete account. This needs a Supabase project; see [docs/backend-setup.md](docs/backend-setup.md).
 
 ## Tech stack
 
 - [Expo](https://expo.dev) SDK 58 and React Native, in TypeScript, with Expo Router for navigation.
 - `expo-notifications` schedules **local** notifications on the phone. No push server is involved.
 - `zustand` with AsyncStorage stores data on the device.
-- Jest tests the scheduling and streak logic.
+- [Supabase](https://supabase.com) (Postgres, sign-in, row-level security) provides the optional accounts and backup. With no Supabase settings, the app runs offline.
+- Jest tests the app logic. The database rules are tested with `node --test` and [PGlite](https://pglite.dev), an in-process Postgres.
 
 One codebase covers iOS, Android and web. iOS is the focus for v1; Android should mostly work as is. Web runs the app UI, but reminders don't work on web.
 
@@ -87,6 +89,7 @@ The first build creates `eas.json` and handles signing. The bundle identifier in
 | `npm test` | Run unit tests (in `America/Los_Angeles`, so daylight-saving cases are real) |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` | ESLint (Expo config) |
+| `npm run test:db` | Database tests: runs `supabase/migrations` in an in-process Postgres and checks the security rules |
 
 ## How reminders are scheduled
 
@@ -99,6 +102,18 @@ iOS lets an app have at most **64 pending local notifications**. The app also ca
 
 All of these rules live in one pure function, `buildSchedule` in `src/scheduling/buildSchedule.ts`, which the unit tests cover.
 
+## Accounts & sync
+
+Accounts are optional and the app is **offline-first**: the phone's copy of the log is what the app always shows, and syncing happens in the background.
+
+- **Setup:** create a Supabase project and follow [docs/backend-setup.md](docs/backend-setup.md). The app reads `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` from `.env.local` (copy `.env.example`). With them empty, there's no Account section and nothing is sent anywhere.
+- **Sign-in:** students enter their Stanford email (or just their SUNet ID) and type the 6-digit code from their inbox. The database rejects any non-`@stanford.edu` sign-up, not just the app.
+- **What syncs:** each cup (with its own ID and timestamps), the goal for each day, and the current goal. **What doesn't:** reminder times and pause state (per phone), and calculator answers.
+- **How:** each change is marked "waiting to upload". A sync uploads those, then downloads anything changed on the server since the last download. When two phones edit the same thing, the newer change wins. The server enforces this too, so an out-of-date phone can't overwrite newer data. Undo marks a cup as deleted rather than erasing it, so the removal reaches other phones.
+- **When:** after sign-in, when the app opens, about 2 seconds after logging a cup or changing the goal, and in the background task. Failed syncs keep everything and retry next time.
+- **First sign-in** uploads everything already logged on the phone, including v1 data. If the phone holds a *different* account's log, the app asks before replacing it.
+- **Code:** pure merge rules in `src/cloud/merge.ts`; the sync steps in `src/cloud/cloudSync.ts` (tested against a fake server in `src/cloud/__tests__/`); sign-in and scheduling in `src/cloud/account.ts`; database schema and rules in `supabase/migrations/`.
+
 ## Project layout
 
 ```
@@ -106,25 +121,30 @@ app/                         Screens (Expo Router)
   _layout.tsx                Startup: load data, notification setup, sync on foreground
   onboarding.tsx             First-run setup
   (tabs)/index.tsx           Today: progress ring, +1 cup, reminders, streaks, 7-day chart
-  (tabs)/settings.tsx        Reminder settings, goal, pause, test reminder, about
+  (tabs)/settings.tsx        Account, reminder settings, goal, pause, test reminder, about
+  calculator.tsx             Water calculator (modal)
+  auth/                      Sign-in: email → 6-digit code → display name
 src/
+  cloud/                     Supabase client, sign-in, sync engine, merge rules (+ tests)
   config.ts                  Product constants (names, defaults, limits)
-  domain/                    Pure logic: time helpers, streaks
+  domain/                    Pure logic: time helpers, streaks, water calculator
   scheduling/                Pure reminder scheduler (+ tests)
   notifications/             expo-notifications adapter, reminder copy
   state/                     On-device stores (settings, drink log, permission)
   sync.ts                    Settings → schedule → OS; notification action handling
   background.ts              Best-effort background re-sync
   ui/                        Theme and shared components
+supabase/
+  migrations/                Database tables, security rules (run once per Supabase project)
+  tests/                     Database tests (npm run test:db)
+docs/backend-setup.md        Step-by-step Supabase setup
 ```
 
-## Ready for future versions
+## Coming next
 
-The team plans to add accounts and social features later, such as following friends' water intake. v1 is already shaped for that:
-
-- **Sync-ready drink log:** each logged cup is stored with a UUID and a timestamp (`src/state/logStore.ts`), so logs can later be uploaded and merged.
-- **Versioned storage:** stored data has a version number, so a `migrate` function can upgrade existing installs when accounts arrive.
-- **Separate layers:** the pure domain and scheduling logic is kept apart from storage and UI. A future sync service can be added alongside it without a rewrite.
+- **Friends:** add friends by invite code or Stanford email; see each other's cups today and streak. Display names are already collected at sign-in.
+- **Anonymous impact stats** for SENSA's reports (opt-out, no account link).
+- Privacy policy and the 2.0.0 release.
 
 ## Things to check on a real device
 

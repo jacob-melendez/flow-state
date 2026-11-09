@@ -16,6 +16,8 @@ import { deviceStorage } from './storage';
 
 export interface SettingsState extends ReminderSettings {
   dailyGoal: number;
+  /** Epoch ms of the last goal change, so the goal syncs "newest wins". */
+  dailyGoalUpdatedAt: number;
   onboarded: boolean;
   /** Set when the last window/interval change had to be shortened. */
   windowWasClamped: boolean;
@@ -26,11 +28,15 @@ export interface SettingsState extends ReminderSettings {
   setInterval: (interval: IntervalMinutes) => void;
   setActiveWindow: (startMin: number, endMin: number) => void;
   setDailyGoal: (goal: number) => void;
+  /** Applies a goal that came from the cloud without marking it as a new change. */
+  applyRemoteGoal: (goal: number, updatedAt: number) => void;
   pauseUntil: (until: number) => void;
   resume: () => void;
   completeOnboarding: () => void;
   setCalculatorProfile: (profile: CalculatorInput) => void;
 }
+
+const clampGoal = (goal: number) => Math.max(MIN_GOAL_CUPS, Math.min(MAX_GOAL_CUPS, Math.round(goal)));
 
 export const useSettings = create<SettingsState>()(
   persist(
@@ -41,6 +47,7 @@ export const useSettings = create<SettingsState>()(
       activeEndMin: DEFAULT_ACTIVE_END,
       pausedUntil: null,
       dailyGoal: DEFAULT_GOAL_CUPS,
+      dailyGoalUpdatedAt: 0,
       onboarded: false,
       windowWasClamped: false,
       calculatorProfile: null,
@@ -54,8 +61,11 @@ export const useSettings = create<SettingsState>()(
         const w = clampWindow(startMin, endMin, get().intervalMinutes);
         set({ activeStartMin: w.activeStartMin, activeEndMin: w.activeEndMin, windowWasClamped: w.clamped });
       },
-      setDailyGoal: (goal) =>
-        set({ dailyGoal: Math.max(MIN_GOAL_CUPS, Math.min(MAX_GOAL_CUPS, Math.round(goal))) }),
+      setDailyGoal: (goal) => {
+        const dailyGoal = clampGoal(goal);
+        if (dailyGoal !== get().dailyGoal) set({ dailyGoal, dailyGoalUpdatedAt: Date.now() });
+      },
+      applyRemoteGoal: (goal, updatedAt) => set({ dailyGoal: clampGoal(goal), dailyGoalUpdatedAt: updatedAt }),
       pauseUntil: (until) => set({ pausedUntil: until, enabled: true }),
       resume: () => set({ pausedUntil: null }),
       completeOnboarding: () => set({ onboarded: true }),
@@ -72,6 +82,7 @@ export const useSettings = create<SettingsState>()(
         activeEndMin,
         pausedUntil,
         dailyGoal,
+        dailyGoalUpdatedAt,
         onboarded,
         calculatorProfile,
       }) => ({
@@ -81,6 +92,7 @@ export const useSettings = create<SettingsState>()(
         activeEndMin,
         pausedUntil,
         dailyGoal,
+        dailyGoalUpdatedAt,
         onboarded,
         calculatorProfile,
       }),

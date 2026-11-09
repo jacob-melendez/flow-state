@@ -6,6 +6,8 @@ import { APP_FULL_NAME, ORG_NAME } from '../../src/config';
 import { sendTestReminder } from '../../src/notifications/adapter';
 import { usePermission } from '../../src/state/permissionStore';
 import { useSettings } from '../../src/state/settingsStore';
+import { cloudEnabled } from '../../src/cloud/client';
+import { AccountCard } from '../../src/ui/AccountCard';
 import { Button, Card, Row, SectionTitle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
@@ -33,6 +35,13 @@ export default function SettingsScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
     >
       <Text style={type.title}>Settings</Text>
+
+      {cloudEnabled ? (
+        <>
+          <SectionTitle>Account</SectionTitle>
+          <AccountCard />
+        </>
+      ) : null}
 
       <SectionTitle>Reminders</SectionTitle>
       <Card style={{ gap: spacing.md }}>
@@ -86,7 +95,9 @@ export default function SettingsScreen() {
           Built to make water awareness and access part of everyday student life.
         </Text>
         <Text style={[type.caption, { marginTop: spacing.sm }]}>
-          Your settings and water log are stored only on this device. Nothing is sent anywhere.
+          {cloudEnabled
+            ? 'Your water log stays on this phone unless you sign in to back it up. Reminder settings and calculator answers never leave your phone.'
+            : 'Your settings and water log are stored only on this device. Nothing is sent anywhere.'}
         </Text>
       </Card>
     </ScrollView>
