@@ -10,6 +10,7 @@ import {
   MAX_GOAL_CUPS,
   MIN_GOAL_CUPS,
 } from '../config';
+import { CalculatorInput } from '../domain/waterCalculator';
 import { ReminderSettings, clampWindow } from '../scheduling/buildSchedule';
 import { deviceStorage } from './storage';
 
@@ -18,6 +19,8 @@ export interface SettingsState extends ReminderSettings {
   onboarded: boolean;
   /** Set when the last window/interval change had to be shortened. */
   windowWasClamped: boolean;
+  /** Last water-calculator answers, kept on this device only (never synced). */
+  calculatorProfile: CalculatorInput | null;
 
   setEnabled: (enabled: boolean) => void;
   setInterval: (interval: IntervalMinutes) => void;
@@ -26,6 +29,7 @@ export interface SettingsState extends ReminderSettings {
   pauseUntil: (until: number) => void;
   resume: () => void;
   completeOnboarding: () => void;
+  setCalculatorProfile: (profile: CalculatorInput) => void;
 }
 
 export const useSettings = create<SettingsState>()(
@@ -39,6 +43,7 @@ export const useSettings = create<SettingsState>()(
       dailyGoal: DEFAULT_GOAL_CUPS,
       onboarded: false,
       windowWasClamped: false,
+      calculatorProfile: null,
 
       setEnabled: (enabled) => set({ enabled, pausedUntil: null }),
       setInterval: (intervalMinutes) => {
@@ -54,12 +59,13 @@ export const useSettings = create<SettingsState>()(
       pauseUntil: (until) => set({ pausedUntil: until, enabled: true }),
       resume: () => set({ pausedUntil: null }),
       completeOnboarding: () => set({ onboarded: true }),
+      setCalculatorProfile: (calculatorProfile) => set({ calculatorProfile }),
     }),
     {
       name: 'flow-state/settings',
       storage: deviceStorage,
       version: 1,
-      partialize: ({ enabled, intervalMinutes, activeStartMin, activeEndMin, pausedUntil, dailyGoal, onboarded }) => ({
+      partialize: ({
         enabled,
         intervalMinutes,
         activeStartMin,
@@ -67,6 +73,16 @@ export const useSettings = create<SettingsState>()(
         pausedUntil,
         dailyGoal,
         onboarded,
+        calculatorProfile,
+      }) => ({
+        enabled,
+        intervalMinutes,
+        activeStartMin,
+        activeEndMin,
+        pausedUntil,
+        dailyGoal,
+        onboarded,
+        calculatorProfile,
       }),
       // Add cases here when the stored shape changes (e.g. accounts in v2).
       migrate: (persisted) => persisted as SettingsState,

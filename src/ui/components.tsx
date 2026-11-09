@@ -89,6 +89,7 @@ export function Stepper({
   max,
   format = String,
   label,
+  step = 1,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -96,6 +97,7 @@ export function Stepper({
   max: number;
   format?: (v: number) => string;
   label: string;
+  step?: number;
 }) {
   return (
     <View style={styles.stepper}>
@@ -103,7 +105,7 @@ export function Stepper({
         accessibilityRole="button"
         accessibilityLabel={`Decrease ${label}`}
         disabled={value <= min}
-        onPress={() => onChange(value - 1)}
+        onPress={() => onChange(Math.max(min, value - step))}
         style={[styles.stepperButton, value <= min && { opacity: 0.3 }]}
       >
         <Text style={styles.stepperButtonText}>−</Text>
@@ -115,7 +117,7 @@ export function Stepper({
         accessibilityRole="button"
         accessibilityLabel={`Increase ${label}`}
         disabled={value >= max}
-        onPress={() => onChange(value + 1)}
+        onPress={() => onChange(Math.min(max, value + step))}
         style={[styles.stepperButton, value >= max && { opacity: 0.3 }]}
       >
         <Text style={styles.stepperButtonText}>+</Text>
@@ -180,9 +182,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 3,
   },
-  segment: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: radius.sm + 2 },
+  segment: { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm + 2 },
   segmentSelected: { backgroundColor: colors.white, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
-  segmentLabel: { fontSize: 15, color: colors.primaryDark, fontWeight: '500' },
+  segmentLabel: { fontSize: 15, color: colors.primaryDark, fontWeight: '500', textAlign: 'center' },
   segmentLabelSelected: { fontWeight: '700' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   stepperButton: {

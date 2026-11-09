@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { INTERVAL_OPTIONS, MAX_GOAL_CUPS, MIN_GOAL_CUPS } from '../config';
@@ -6,7 +7,7 @@ import { maxWindowMinutes } from '../scheduling/buildSchedule';
 import { useSettings } from '../state/settingsStore';
 import { Banner, Row, Segmented, Stepper } from './components';
 import { TimeField } from './TimeField';
-import { spacing, type } from './theme';
+import { colors, spacing, type } from './theme';
 
 const intervalLabel = (m: number) => (m === 60 ? '1 hour' : `${m} min`);
 
@@ -45,15 +46,25 @@ export function ActiveHoursFields() {
 export function GoalField() {
   const { dailyGoal, setDailyGoal } = useSettings();
   return (
-    <Row label="Daily goal" hint="1 cup = 8 oz">
-      <Stepper
-        label="daily goal"
-        value={dailyGoal}
-        onChange={setDailyGoal}
-        min={MIN_GOAL_CUPS}
-        max={MAX_GOAL_CUPS}
-        format={(v) => `${v} cups`}
-      />
-    </Row>
+    <View>
+      <Row label="Daily goal" hint="1 cup = 8 oz">
+        <Stepper
+          label="daily goal"
+          value={dailyGoal}
+          onChange={setDailyGoal}
+          min={MIN_GOAL_CUPS}
+          max={MAX_GOAL_CUPS}
+          format={(v) => `${v} cups`}
+        />
+      </Row>
+      <Text
+        accessibilityRole="button"
+        accessibilityHint="Opens the water calculator"
+        onPress={() => router.push('/calculator')}
+        style={{ color: colors.primary, fontSize: 15, fontWeight: '600', paddingTop: spacing.sm }}
+      >
+        Not sure? Calculate my goal →
+      </Text>
+    </View>
   );
 }

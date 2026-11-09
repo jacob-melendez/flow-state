@@ -53,6 +53,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
+        <Stack.Screen name="calculator" options={{ presentation: 'modal' }} />
       </Stack>
     </SafeAreaProvider>
   );
