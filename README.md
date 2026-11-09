@@ -6,13 +6,14 @@ Flow State reminds Stanford students to drink water every **15 minutes, 30 minut
 
 **Version 1 is entirely on-device:** no accounts, no server, no analytics. Settings and the water log never leave the phone.
 
-## Features (v1)
+## Features
 
 - **Interval reminders**: every 15 min, 30 min or 1 hour.
 - **Active hours**: reminders only arrive within a daily window, e.g. 9:00 AM–9:00 PM. The window can cross midnight.
 - **Log a drink**: a "+1 cup" button in the app, with undo. Each cup is 8 oz, and the default goal is 8 cups.
   - Notifications also have **"I drank a cup 💧"** and **"Snooze 1 hr"** buttons. To see them, press and hold a notification, or swipe it left and tap View. Test them in a development build; they may not appear in Expo Go.
 - **Daily goal and streaks**: a progress ring, the current and best streaks, and a 7-day chart. The goal is recorded for each day, so changing it doesn't rewrite past streaks.
+- **Water calculator**: suggests a daily goal from weight, sex, exercise, hot weather, and pregnancy/breastfeeding, with a breakdown and a one-tap "Set as my daily goal". Answers stay on the phone. To open it, tap "Not sure? Calculate my goal" (in onboarding or Settings → Goal). The method and all its numbers are documented at the top of `src/domain/waterCalculator.ts` so the health team can review them. It is an estimate, not medical advice.
 - **Pause**: for 1 hour, 2 hours, or the rest of today. The Settings switch turns reminders off entirely.
 - **Onboarding**: interval, then active hours, then goal, then the notification permission prompt.
 - **Test reminder**: Settings → "Send a test reminder" fires one 10 seconds later.
