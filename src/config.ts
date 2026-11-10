@@ -13,6 +13,9 @@ export const APP_FULL_NAME = 'Stanford Flow State';
 
 export const ORG_NAME = 'SENSA Impact Labs · Health & Wellness';
 
+/** SENSA's website, shown in Settings → About when set. */
+export const SENSA_URL: string | null = null;
+
 export const INTERVAL_OPTIONS = [15, 30, 60] as const;
 export type IntervalMinutes = (typeof INTERVAL_OPTIONS)[number];
 

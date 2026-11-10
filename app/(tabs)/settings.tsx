@@ -1,14 +1,16 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Alert, Linking, ScrollView, Text, StyleSheet } from 'react-native';
+import { Alert, Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { APP_FULL_NAME, ORG_NAME, PRIVACY_POLICY_URL } from '../../src/config';
+import { APP_FULL_NAME, ORG_NAME, PRIVACY_POLICY_URL, SENSA_URL } from '../../src/config';
 import { sendTestReminder } from '../../src/notifications/adapter';
 import { usePermission } from '../../src/state/permissionStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { cloudEnabled } from '../../src/cloud/client';
 import { AccountCard } from '../../src/ui/AccountCard';
+import { STANFORD_LOGO } from '../../src/ui/brandAssets';
+import { SensaLogo } from '../../src/ui/SensaLogo';
 import { Button, Card, Row, SectionTitle, Segmented, Toggle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
@@ -20,7 +22,7 @@ const APPEARANCE_LABELS: Record<AppearancePreference, string> = { system: 'Syste
 
 export default function SettingsScreen() {
   const styles = useStyles();
-  const { colors, type } = useTheme();
+  const { colors, type, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const { enabled, setEnabled, shareImpactStats, setShareImpactStats, appearance, setAppearance } = useSettings();
   const permission = usePermission((s) => s.permission);
@@ -118,9 +120,9 @@ export default function SettingsScreen() {
                   />
                 </Row>
                 <Text style={[type.caption, { lineHeight: 19 }]}>
-                  Helps SENSA Impact Labs measure whether Flow State works. Once a day, the app sends each past day’s cup
-                  count and whether you met your goal, with a random ID that isn’t linked to your name, email or account.
-                  Nothing is sent while this is off.
+                  Helps SENSA Impact Labs measure whether Flow State works. Once a day, the app sends each past day’s
+                  cup count and whether you met your goal, with a random ID that isn’t linked to your name, email or
+                  account. Nothing is sent while this is off.
                 </Text>
               </>
             ) : null}
@@ -135,8 +137,14 @@ export default function SettingsScreen() {
 
       <SectionTitle>About</SectionTitle>
       <Card style={{ gap: spacing.xs }}>
-        <Text style={type.heading}>{APP_FULL_NAME}</Text>
-        <Text style={[type.caption, { color: colors.primaryText }]}>{ORG_NAME}</Text>
+        <View style={styles.aboutHeader}>
+          <SensaLogo width={56} />
+          <View style={{ flex: 1 }}>
+            <Text style={type.heading}>{APP_FULL_NAME}</Text>
+            <Text style={[type.caption, { color: colors.primaryText }]}>{ORG_NAME}</Text>
+            <Text style={type.caption}>A project of SENSA, a Stanford student organization</Text>
+          </View>
+        </View>
         <Text style={[type.body, { marginTop: spacing.sm, lineHeight: 22 }]}>
           Built to make water awareness and access part of everyday student life.
         </Text>
@@ -146,6 +154,20 @@ export default function SettingsScreen() {
             : 'Your settings and water log are stored only on this device. Nothing is sent anywhere.'}
         </Text>
         <Text style={type.caption}>Version {Constants.expoConfig?.version ?? '–'}</Text>
+        {SENSA_URL ? (
+          <Text accessibilityRole="link" onPress={() => Linking.openURL(SENSA_URL!)} style={styles.link}>
+            About SENSA
+          </Text>
+        ) : null}
+        {STANFORD_LOGO ? (
+          // Shown separately from SENSA's logo, never combined with it (Stanford identity rules).
+          <Image
+            source={scheme === 'dark' ? STANFORD_LOGO.dark : STANFORD_LOGO.light}
+            style={styles.stanfordLogo}
+            resizeMode="contain"
+            accessibilityLabel="Stanford University"
+          />
+        ) : null}
       </Card>
     </ScrollView>
   );
@@ -153,6 +175,9 @@ export default function SettingsScreen() {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  link: { color: colors.primaryText, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
-}));
+    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    aboutHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    stanfordLogo: { width: 64, height: 64, marginTop: spacing.lg, alignSelf: 'flex-start' },
+    link: { color: colors.primaryText, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
+  }),
+);
