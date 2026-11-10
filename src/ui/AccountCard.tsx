@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { deleteAccount, requestCloudSync, signOut, useAccount } from '../cloud/account';
 import { replaceLocalDataWith } from '../cloud/cloudSync';
+import { setDiscoverableByEmail } from '../cloud/friends';
 import { useLog } from '../state/logStore';
 import { Banner, Button, Card, Row } from './components';
 import { colors, spacing, type } from './theme';
@@ -21,7 +22,7 @@ function ago(t: number, now: number): string {
 /** Settings → Account. Hidden entirely when the app has no backend configured. */
 export function AccountCard() {
   const now = useNow(30_000);
-  const { status, email, displayName, syncing, syncError, userId } = useAccount();
+  const { status, email, displayName, syncing, syncError, userId, friendCode, discoverableByEmail } = useAccount();
   const { lastSyncedAt, ownerUserId, dirtyEntryIds } = useLog();
   const [deleting, setDeleting] = useState(false);
 
@@ -114,6 +115,20 @@ export function AccountCard() {
           </Text>
         </View>
       )}
+
+      {friendCode ? (
+        <Row label="Let friends find me by email" hint="Friends can always add you with your friend code.">
+          <Switch
+            accessibilityLabel="Let friends find me by email"
+            value={discoverableByEmail}
+            onValueChange={async (v) => {
+              const err = await setDiscoverableByEmail(v);
+              if (err) Alert.alert('Couldn’t update setting', err);
+            }}
+            trackColor={{ true: colors.primary }}
+          />
+        </Row>
+      ) : null}
 
       <View style={styles.divider} />
       <Button variant="ghost" label="Sign out" onPress={confirmSignOut} />

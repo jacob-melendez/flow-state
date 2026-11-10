@@ -17,6 +17,7 @@ The app works fully offline. Students can optionally **sign in with their Stanfo
 - **Pause**: for 1 hour, 2 hours, or the rest of today. The Settings switch turns reminders off entirely.
 - **Onboarding**: interval, then active hours, then goal, then the notification permission prompt.
 - **Test reminder**: Settings → "Send a test reminder" fires one 10 seconds later.
+- **Friends (with an account)**: add friends by friend code, an invite link, or their exact Stanford email. The Friends tab shows each friend's cups today vs their goal and their streak, plus requests to accept or decline. Friends see only your name, today's cups and your streak; incoming requests also show the sender's Stanford email. Students can remove or block anyone, and can turn off being found by email.
 - **Accounts & backup (optional)**: sign in with a 6-digit code emailed to a `@stanford.edu` address. The water log and goal sync across phones, and Settings → Account offers sign out and delete account. This needs a Supabase project; see [docs/backend-setup.md](docs/backend-setup.md).
 
 ## Tech stack
@@ -112,6 +113,7 @@ Accounts are optional and the app is **offline-first**: the phone's copy of the 
 - **How:** each change is marked "waiting to upload". A sync uploads those, then downloads anything changed on the server since the last download. When two phones edit the same thing, the newer change wins. The server enforces this too, so an out-of-date phone can't overwrite newer data. Undo marks a cup as deleted rather than erasing it, so the removal reaches other phones.
 - **When:** after sign-in, when the app opens, about 2 seconds after logging a cup or changing the goal, and in the background task. Failed syncs keep everything and retry next time.
 - **First sign-in** uploads everything already logged on the phone, including v1 data. If the phone holds a *different* account's log, the app asks before replacing it.
+- **Friends:** all the rules live in database functions (`supabase/migrations/20261111000000_friends.sql`): requests, accepting, blocking, and a `get_friends` that returns only name, today's cups/goal and streak. Streaks are computed on the server with the same rules as the app, so friends never receive anyone's history. Students can't write to the friendships table directly. A "not found" reply looks the same whether the person doesn't exist, has turned off email search, or blocked you.
 - **Code:** pure merge rules in `src/cloud/merge.ts`; the sync steps in `src/cloud/cloudSync.ts` (tested against a fake server in `src/cloud/__tests__/`); sign-in and scheduling in `src/cloud/account.ts`; database schema and rules in `supabase/migrations/`.
 
 ## Project layout
@@ -121,7 +123,10 @@ app/                         Screens (Expo Router)
   _layout.tsx                Startup: load data, notification setup, sync on foreground
   onboarding.tsx             First-run setup
   (tabs)/index.tsx           Today: progress ring, +1 cup, reminders, streaks, 7-day chart
+  (tabs)/friends.tsx         Friends: requests, friends' progress, pending requests
   (tabs)/settings.tsx        Account, reminder settings, goal, pause, test reminder, about
+  friends/add.tsx            Add friends: your code + share, add by code or email
+  add-friend/[code].tsx      Invite links (flowstate://add-friend/CODE)
   calculator.tsx             Water calculator (modal)
   auth/                      Sign-in: email → 6-digit code → display name
 src/
@@ -142,7 +147,7 @@ docs/backend-setup.md        Step-by-step Supabase setup
 
 ## Coming next
 
-- **Friends:** add friends by invite code or Stanford email; see each other's cups today and streak. Display names are already collected at sign-in.
+- Push "nudges" between friends (needs server push and a paid Apple Developer account).
 - **Anonymous impact stats** for SENSA's reports (opt-out, no account link).
 - Privacy policy and the 2.0.0 release.
 

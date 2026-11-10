@@ -59,6 +59,7 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="calculator" options={{ presentation: 'modal' }} />
         <Stack.Screen name="auth" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="friends/add" options={{ presentation: 'modal' }} />
       </Stack>
     </SafeAreaProvider>
   );

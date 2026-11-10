@@ -42,6 +42,15 @@ The script can safely be run more than once. It:
 - keeps the newest change when two phones edit the same thing;
 - adds the `delete_my_account` function that the app's "Delete account" button uses.
 
+### 2b. Add friends support
+
+Do the same with `supabase/migrations/20261111000000_friends.sql`: open a new query, paste the **whole** file, and click **Run**. Always run the files in order (accounts first, then friends). This one:
+- gives every student a friend code;
+- adds the `friendships` table;
+- adds the functions behind friend requests, which enforce who can see what.
+
+Sign-in and backup keep working if you haven't run it yet; the Friends tab just can't load.
+
 <details>
 <summary>Prefer the command line? Use the Supabase CLI instead.</summary>
 
@@ -57,7 +66,7 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-`YOUR_PROJECT_REF` is the part of the Project URL before `.supabase.co`.
+`YOUR_PROJECT_REF` is the part of the Project URL before `.supabase.co`. `db push` runs every file in `supabase/migrations/` that hasn't run yet.
 </details>
 
 ## 3. Make sign-in emails contain a 6-digit code
@@ -113,7 +122,13 @@ Any SMTP provider works (SendGrid, Postmark, Amazon SES, …). Stanford-hosted o
 3. Log a few cups. Settings shows "Backed up just now". In the dashboard's Table Editor, rows appear in `drink_entries`.
 4. Delete the app, reinstall it (or use a second phone), and sign in with the same email. Your cups and goal come back.
 5. With two phones signed in, log on one and open the app on the other. The count updates.
-6. Settings → Account → **Delete account** removes your rows from all three tables.
+6. **Friends** (needs two Stanford accounts, e.g. two phones or a phone plus a simulator):
+   1. On phone A, go to Friends → **+ Add** and note the friend code.
+   2. On phone B, enter that code. Phone A sees a request with B's name and email; accept it.
+   3. Log cups on B, then pull down to refresh the Friends tab on A. B's cups and streak update.
+   4. Try adding by Stanford email. Then turn off Settings → Account → *Let friends find me by email* and check that the email no longer finds you.
+   5. Remove the friend, then try **Remove & block**: the blocked account's requests now say "No one found".
+7. Settings → Account → **Delete account** removes your rows from every table, including friendships.
 
 ## Troubleshooting
 
@@ -125,10 +140,12 @@ Any SMTP provider works (SendGrid, Postmark, Amazon SES, …). Stanford-hosted o
 | Emails never arrive | You're still on Supabase's built-in email (step 4), or Stanford's filter quarantined it. |
 | "Something went wrong" on sign-in | Check **Authentication → Logs** in the dashboard; make sure the SQL script ran (step 2). |
 | "Delete account" fails | Make sure the SQL script ran completely; it creates `delete_my_account`. |
+| Friends tab says "Couldn't refresh", or there's no friend code | Run `20261111000000_friends.sql` (step 2b). |
+| A friend's cups look out of date | Their phone uploads about 2 seconds after they log a cup, but only while online. Pull down to refresh. |
 | Sign-in works but nothing backs up | Check **Database → Logs** for permission errors; re-run the SQL script. |
 
 ## For developers
 
-- **Database tests:** `npm run test:db` runs the migration in an in-process Postgres (PGlite) with a stand-in for Supabase's `auth` schema (`supabase/tests/auth-stub.sql`). They check the Stanford-only rule, row-level security, newest-wins, and account deletion. Add a test there whenever you change the SQL.
+- **Database tests:** `npm run test:db` runs the migration in an in-process Postgres (PGlite) with a stand-in for Supabase's `auth` schema (`supabase/tests/auth-stub.sql`). They check the Stanford-only rule, row-level security, newest-wins, account deletion, and every friends rule (requests, privacy of what friends see, streaks, blocking). Add a test there whenever you change the SQL.
 - **Schema changes:** add a **new** file in `supabase/migrations/` (don't edit one that has already run), run it in each project, and update the tests.
 - **How the app syncs** is described in `README.md` → *Accounts & sync*.

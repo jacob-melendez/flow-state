@@ -20,6 +20,9 @@ interface AccountState {
   userId: string | null;
   email: string | null;
   displayName: string | null;
+  /** Shown on the Friends tab; null until the profile loads. */
+  friendCode: string | null;
+  discoverableByEmail: boolean;
   syncing: boolean;
   syncError: string | null;
 }
@@ -29,6 +32,8 @@ export const useAccount = create<AccountState>()(() => ({
   userId: null,
   email: null,
   displayName: null,
+  friendCode: null,
+  discoverableByEmail: true,
   syncing: false,
   syncError: null,
 }));
@@ -109,7 +114,14 @@ export function startCloud(): void {
   client.auth.onAuthStateChange((_event, session) => {
     const user = session?.user;
     if (!user) {
-      useAccount.setState({ status: 'signed-out', userId: null, email: null, displayName: null, syncError: null });
+      useAccount.setState({
+        status: 'signed-out',
+        userId: null,
+        email: null,
+        displayName: null,
+        friendCode: null,
+        syncError: null,
+      });
       return;
     }
     const changedUser = useAccount.getState().userId !== user.id;
@@ -138,11 +150,32 @@ export function startCloud(): void {
   });
 }
 
-async function loadProfile(): Promise<void> {
+interface ProfileRow {
+  display_name: string | null;
+  friend_code?: string | null;
+  discoverable_by_email?: boolean;
+}
+
+export async function loadProfile(): Promise<void> {
   const userId = useAccount.getState().userId;
   if (!supabase || !userId) return;
-  const { data } = await supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle();
-  if (data) useAccount.setState({ displayName: (data as { display_name: string | null }).display_name });
+  const full = await supabase
+    .from('profiles')
+    .select('display_name, friend_code, discoverable_by_email')
+    .eq('id', userId)
+    .maybeSingle();
+  // If the friends migration hasn't been run yet, accounts still work without it.
+  const result = full.error
+    ? await supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle()
+    : full;
+  const row = result.data as ProfileRow | null;
+  if (row) {
+    useAccount.setState({
+      displayName: row.display_name,
+      friendCode: row.friend_code ?? null,
+      discoverableByEmail: row.discoverable_by_email ?? true,
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
