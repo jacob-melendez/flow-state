@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Importing this module also defines the background task, which must happen at startup.
 import { registerBackgroundSync } from '../src/background';
+import { requestCloudSync, startCloud } from '../src/cloud/account';
+import { reportImpactStats } from '../src/cloud/impact';
 import { configureNotifications } from '../src/notifications/adapter';
 import { useHydrated } from '../src/state/hydration';
 import { usePermission } from '../src/state/permissionStore';
@@ -20,6 +22,9 @@ export default function RootLayout() {
     // Notification action buttons only exist on iOS/Android.
     const native = Platform.OS !== 'web';
     const responseSub = native ? Notifications.addNotificationResponseReceivedListener(handleNotificationResponse) : null;
+
+    startCloud();
+    reportImpactStats();
 
     (async () => {
       await configureNotifications();
@@ -36,6 +41,8 @@ export default function RootLayout() {
       if (state === 'active') {
         usePermission.getState().refresh();
         syncReminders();
+        requestCloudSync();
+        reportImpactStats();
       }
     });
 
@@ -54,6 +61,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="calculator" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="auth" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="friends/add" options={{ presentation: 'modal' }} />
       </Stack>
     </SafeAreaProvider>
   );

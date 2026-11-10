@@ -42,7 +42,11 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## This project (Flow State)
 
-- Hydration reminder app for Stanford students (SENSA Impact Labs). v1 is fully on-device: no accounts, no server, no analytics.
+- Hydration reminder app for Stanford students (SENSA Impact Labs). Offline-first: the app must work fully without an account or a configured backend (no `EXPO_PUBLIC_SUPABASE_*` env vars → `supabase` is `null`).
+- Optional accounts/backup use Supabase (`src/cloud/`). Keep merge rules pure in `src/cloud/merge.ts` and test sync changes against the fake server in `src/cloud/__tests__/cloudSync.test.ts`. Never upload reminder settings or water-calculator answers.
+- Friends rules live only in the database functions in `supabase/migrations/20261111000000_friends.sql`; the app never writes `friendships` directly. Friends may see only display name, today's cups/goal and streak (incoming requests also show email). Keep `current_streak` (SQL) and `currentStreak` (`src/domain/streaks.ts`) in sync.
+- Anonymous impact stats (`src/cloud/impact.ts`, `src/domain/impact.ts`) must stay unlinkable: send only through `anonymousClient` (never the signed-in client), only the fields in `report_usage`, and only when `shareImpactStats` is on. Update `PRIVACY.md` whenever data collection changes.
+- Database changes go in a NEW file in `supabase/migrations/` (never edit one that may have run) with tests in `supabase/tests/` (`npm run test:db`). Every table needs row-level security.
 - Reminder scheduling logic is the pure function `buildSchedule` in `src/scheduling/buildSchedule.ts`. Keep OS calls in `src/notifications/adapter.ts` and orchestration in `src/sync.ts`.
 - iOS allows at most 64 pending local notifications; `MAX_DAILY_SLOTS` in `src/config.ts` enforces this. Don't add notifications without accounting for it.
-- Run `npm test` (runs in America/Los_Angeles so daylight-saving cases are real), `npm run typecheck` and `npm run lint` before finishing.
+- Run `npm test` (runs in America/Los_Angeles so daylight-saving cases are real), `npm run test:db`, `npm run typecheck` and `npm run lint` before finishing.

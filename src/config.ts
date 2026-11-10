@@ -55,3 +55,18 @@ export const ACTION_SNOOZE_1H = 'snooze-1h';
 export const ACTIONS_OPEN_APP = true;
 
 export const BACKGROUND_SYNC_TASK = 'flow-state-reminder-sync';
+
+/**
+ * Anonymous impact stats (see supabase/migrations/20261112000000_impact_stats.sql).
+ * On by default with disclosure in onboarding and Settings. If the team's
+ * advisor/IRB requires opt-in, set this to false.
+ */
+export const IMPACT_STATS_DEFAULT = true;
+/** How many past days the app will catch up on if it wasn't opened for a while. */
+export const IMPACT_LOOKBACK_DAYS = 7;
+
+/**
+ * Public URL of the privacy policy (PRIVACY.md), shown in Settings when set.
+ * The App Store requires one; host it (e.g. GitHub Pages or a Google Doc) and paste the link here.
+ */
+export const PRIVACY_POLICY_URL: string | null = null;

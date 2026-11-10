@@ -3,6 +3,7 @@ import { ReactNode, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { cloudEnabled } from '../src/cloud/client';
 import { APP_FULL_NAME, ORG_NAME } from '../src/config';
 import { usePermission } from '../src/state/permissionStore';
 import { useSettings } from '../src/state/settingsStore';
@@ -68,8 +69,14 @@ export default function OnboardingScreen() {
         <Step emoji="🔔" title="Turn on reminders" subtitle="Reminders need notification permission.">
           <Text style={styles.body}>
             Next, your iPhone will ask whether to allow notifications. Tap “Allow” so we can remind you to drink water.
-            Everything stays on your phone.
+            {cloudEnabled ? '' : ' Everything stays on your phone.'}
           </Text>
+          {cloudEnabled ? (
+            <Text style={[type.caption, { lineHeight: 19 }]}>
+              To help SENSA Impact Labs measure impact, Flow State shares anonymous daily totals (cups and whether you met
+              your goal) with a random ID that isn’t linked to you. You can turn this off any time in Settings → Privacy.
+            </Text>
+          ) : null}
         </Step>
       );
       break;

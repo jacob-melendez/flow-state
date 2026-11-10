@@ -1,11 +1,14 @@
+import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Switch, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { APP_FULL_NAME, ORG_NAME } from '../../src/config';
+import { APP_FULL_NAME, ORG_NAME, PRIVACY_POLICY_URL } from '../../src/config';
 import { sendTestReminder } from '../../src/notifications/adapter';
 import { usePermission } from '../../src/state/permissionStore';
 import { useSettings } from '../../src/state/settingsStore';
+import { cloudEnabled } from '../../src/cloud/client';
+import { AccountCard } from '../../src/ui/AccountCard';
 import { Button, Card, Row, SectionTitle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
@@ -13,7 +16,7 @@ import { colors, spacing, type } from '../../src/ui/theme';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { enabled, setEnabled } = useSettings();
+  const { enabled, setEnabled, shareImpactStats, setShareImpactStats } = useSettings();
   const permission = usePermission((s) => s.permission);
   const [testSent, setTestSent] = useState(false);
 
@@ -33,6 +36,13 @@ export default function SettingsScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
     >
       <Text style={type.title}>Settings</Text>
+
+      {cloudEnabled ? (
+        <>
+          <SectionTitle>Account</SectionTitle>
+          <AccountCard />
+        </>
+      ) : null}
 
       <SectionTitle>Reminders</SectionTitle>
       <Card style={{ gap: spacing.md }}>
@@ -78,6 +88,36 @@ export default function SettingsScreen() {
         <Text style={type.caption}>Lock your phone after tapping to see how reminders look.</Text>
       </Card>
 
+      {cloudEnabled || PRIVACY_POLICY_URL ? (
+        <>
+          <SectionTitle>Privacy</SectionTitle>
+          <Card style={{ gap: spacing.sm }}>
+            {cloudEnabled ? (
+              <>
+                <Row label="Share anonymous usage stats">
+                  <Switch
+                    accessibilityLabel="Share anonymous usage stats"
+                    value={shareImpactStats}
+                    onValueChange={setShareImpactStats}
+                    trackColor={{ true: colors.primary }}
+                  />
+                </Row>
+                <Text style={[type.caption, { lineHeight: 19 }]}>
+                  Helps SENSA Impact Labs measure whether Flow State works. Once a day, the app sends each past day’s cup
+                  count and whether you met your goal, with a random ID that isn’t linked to your name, email or account.
+                  Nothing is sent while this is off.
+                </Text>
+              </>
+            ) : null}
+            {PRIVACY_POLICY_URL ? (
+              <Text accessibilityRole="link" onPress={() => Linking.openURL(PRIVACY_POLICY_URL!)} style={styles.link}>
+                Privacy policy
+              </Text>
+            ) : null}
+          </Card>
+        </>
+      ) : null}
+
       <SectionTitle>About</SectionTitle>
       <Card style={{ gap: spacing.xs }}>
         <Text style={type.heading}>{APP_FULL_NAME}</Text>
@@ -86,8 +126,11 @@ export default function SettingsScreen() {
           Built to make water awareness and access part of everyday student life.
         </Text>
         <Text style={[type.caption, { marginTop: spacing.sm }]}>
-          Your settings and water log are stored only on this device. Nothing is sent anywhere.
+          {cloudEnabled
+            ? 'Your water log stays on this phone unless you sign in to back it up. Reminder settings and calculator answers never leave your phone.'
+            : 'Your settings and water log are stored only on this device. Nothing is sent anywhere.'}
         </Text>
+        <Text style={type.caption}>Version {Constants.expoConfig?.version ?? '–'}</Text>
       </Card>
     </ScrollView>
   );
@@ -95,4 +138,5 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  link: { color: colors.primary, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
 });

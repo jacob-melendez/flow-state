@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 
+import { cloudEnabled } from '../../src/cloud/client';
 import { useSettings } from '../../src/state/settingsStore';
 import { colors } from '../../src/ui/theme';
 
@@ -23,6 +24,15 @@ export default function TabsLayout() {
         options={{
           title: 'Today',
           tabBarIcon: ({ color, size }) => <Ionicons name="water" color={color as string} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: 'Friends',
+          // Friends need accounts, so the tab only exists when a backend is configured.
+          href: cloudEnabled ? undefined : null,
+          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" color={color as string} size={size} />,
         }}
       />
       <Tabs.Screen

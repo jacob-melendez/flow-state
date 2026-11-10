@@ -5,12 +5,17 @@ const at = (y: number, mo: number, d: number, h = 12, mi = 0) => new Date(y, mo 
 
 let n = 0;
 const cups = (time: number, count: number): DrinkEntry[] =>
-  Array.from({ length: count }, () => ({ id: `e${n++}`, loggedAt: time, cups: 1 }));
+  Array.from({ length: count }, () => ({ id: `e${n++}`, loggedAt: time, cups: 1, updatedAt: time, deletedAt: null }));
 
 describe('countsByDay', () => {
   it('groups by local day, including late-night entries', () => {
     const counts = countsByDay([...cups(at(2026, 10, 14, 23, 59), 2), ...cups(at(2026, 10, 15, 0, 1), 1)]);
     expect(counts).toEqual({ '2026-10-14': 2, '2026-10-15': 1 });
+  });
+
+  it('ignores deleted entries', () => {
+    const [kept, removed] = cups(at(2026, 10, 14), 2);
+    expect(countsByDay([kept, { ...removed, deletedAt: at(2026, 10, 14, 13) }])).toEqual({ '2026-10-14': 1 });
   });
 });
 

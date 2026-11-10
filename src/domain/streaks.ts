@@ -10,6 +10,10 @@ export interface DrinkEntry {
   loggedAt: number;
   /** Number of cups (always 1 today; kept for future serving sizes). */
   cups: number;
+  /** Epoch ms of the last change (used to resolve sync conflicts: newest wins). */
+  updatedAt: number;
+  /** Epoch ms when removed (undo). Kept so the removal syncs to other phones. */
+  deletedAt: number | null;
 }
 
 export interface DaySummary {
@@ -23,6 +27,7 @@ export interface DaySummary {
 export function countsByDay(entries: DrinkEntry[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const e of entries) {
+    if (e.deletedAt != null) continue;
     const k = dateKey(e.loggedAt);
     counts[k] = (counts[k] ?? 0) + e.cups;
   }
