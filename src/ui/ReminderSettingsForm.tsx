@@ -36,7 +36,7 @@ export function ActiveHoursFields() {
           <Banner tone="warning">
             {`With ${intervalLabel(intervalMinutes)} reminders, active hours can be up to ${formatDuration(
               maxWindowMinutes(intervalMinutes),
-            )} (iPhone limits how many reminders an app can schedule). We adjusted your end time.`}
+            )} (phones limit how many reminders an app can schedule). We adjusted your end time.`}
           </Banner>
         </View>
       ) : null}

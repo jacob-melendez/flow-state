@@ -64,7 +64,7 @@ export default function CalculatorScreen() {
   const isCurrentGoal = estimate?.cups === dailyGoal;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? spacing.lg : insets.top + spacing.md }]}>
         <Text style={type.heading}>Water calculator</Text>
         <Text accessibilityRole="button" onPress={() => router.back()} style={styles.done}>

@@ -19,13 +19,15 @@ import { messageForSlot } from './messages';
 
 export type PermissionState = 'granted' | 'denied' | 'undetermined';
 
-let configured = false;
+let configuring: Promise<void> | null = null;
 
 /** Call once at startup: foreground display behaviour, action buttons, Android channel. */
-export async function configureNotifications(): Promise<void> {
-  if (configured) return;
-  configured = true;
+export function configureNotifications(): Promise<void> {
+  configuring ??= doConfigure();
+  return configuring;
+}
 
+async function doConfigure(): Promise<void> {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
@@ -63,6 +65,8 @@ export async function getPermission(): Promise<PermissionState> {
 }
 
 export async function requestPermission(): Promise<PermissionState> {
+  // Android 13+ only shows the permission prompt once a notification channel exists.
+  await configureNotifications();
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return 'granted';
   return toPermissionState(

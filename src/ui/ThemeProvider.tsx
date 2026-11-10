@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useMemo } from 'react';
+import * as SystemUI from 'expo-system-ui';
 import { Appearance, Platform, useColorScheme } from 'react-native';
 
 import { useSettings } from '../state/settingsStore';
@@ -15,6 +16,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (Platform.OS === 'web') return;
     Appearance.setColorScheme(preference === 'system' ? 'unspecified' : preference);
   }, [preference]);
+
+  // Native: the root view color shows behind screen transitions and the Android nav bar.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    SystemUI.setBackgroundColorAsync(themeFor(scheme).colors.background).catch(() => {});
+  }, [scheme]);
 
   // Web: match the page background so overscroll areas aren't white in dark mode.
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { ReactNode, useState } from 'react';
-import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { ReactNode, useEffect, useState } from 'react';
+import { BackHandler, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cloudEnabled } from '../src/cloud/client';
@@ -23,6 +23,16 @@ export default function OnboardingScreen() {
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
+
+  // Android back button: go back a step instead of leaving the app mid-setup.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (step === 0) return false;
+      setStep((s) => Math.max(s - 1, 0));
+      return true;
+    });
+    return () => sub.remove();
+  }, [step]);
   const finish = async (ask: boolean) => {
     if (ask) await requestPermission();
     completeOnboarding();
@@ -70,7 +80,7 @@ export default function OnboardingScreen() {
       content = (
         <Step emoji="🔔" title="Turn on reminders" subtitle="Reminders need notification permission.">
           <Text style={styles.body}>
-            Next, your iPhone will ask whether to allow notifications. Tap “Allow” so we can remind you to drink water.
+            Next, your phone will ask whether to allow notifications. Tap “Allow” so we can remind you to drink water.
             {cloudEnabled ? '' : ' Everything stays on your phone.'}
           </Text>
           {cloudEnabled ? (
