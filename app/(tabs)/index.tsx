@@ -10,10 +10,12 @@ import { dateKey, parseDateKey } from '../../src/domain/time';
 import { useLog } from '../../src/state/logStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { Card, SectionTitle } from '../../src/ui/components';
+import { supportsReminders } from '../../src/platform';
+import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { WaterBuddy } from '../../src/ui/WaterBuddy';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
-import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 import { useNow } from '../../src/ui/useNow';
 
 const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -83,10 +85,14 @@ export default function TodayScreen() {
       ) : null}
 
       <SectionTitle>Reminders</SectionTitle>
-      <Card style={{ gap: spacing.md }}>
-        <ReminderStatus />
-        <PauseControls />
-      </Card>
+      {supportsReminders ? (
+        <Card style={{ gap: spacing.md }}>
+          <ReminderStatus />
+          <PauseControls />
+        </Card>
+      ) : (
+        <GetTheAppCard />
+      )}
 
       <SectionTitle>Streak</SectionTitle>
       <Card style={styles.streakRow}>
@@ -136,7 +142,7 @@ export default function TodayScreen() {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
   ringWrap: { alignItems: 'center', marginVertical: spacing.xl },
   count: { fontSize: 34, fontWeight: '800', color: colors.water, marginTop: spacing.md },
   countOf: { fontSize: 18, fontWeight: '600', color: colors.muted },

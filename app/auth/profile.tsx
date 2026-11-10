@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View, Styl
 import { updateDisplayName, useAccount } from '../../src/cloud/account';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 /** Sets the display name (shown on first sign-in, and from Settings to edit it). */
 export default function ProfileScreen() {
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
+  content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   input: {

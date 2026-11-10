@@ -6,7 +6,7 @@ import { requestCloudSync, sendCode, signOut, verifyCode } from '../../src/cloud
 import { replaceLocalDataWith } from '../../src/cloud/cloudSync';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 const CODE_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -123,7 +123,7 @@ export default function VerifyScreen() {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
+  content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   code: {

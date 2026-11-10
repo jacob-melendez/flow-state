@@ -4,10 +4,11 @@ import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAccount } from '../../src/cloud/account';
+import { isWeb } from '../../src/platform';
 import { FriendRow, removeFriend, respondToRequest, useFriends } from '../../src/cloud/friends';
 import { Banner, Button, Card, SectionTitle } from '../../src/ui/components';
 import { ProgressRing } from '../../src/ui/ProgressRing';
-import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 export default function FriendsScreen() {
   const styles = useStyles();
@@ -125,7 +126,7 @@ export default function FriendsScreen() {
 
         {friends.length > 0 ? (
           <Text style={[type.caption, { marginTop: spacing.md, textAlign: 'center' }]}>
-            Friends see your name, today’s cups and your streak. Pull down to refresh.
+            Friends see your name, today’s cups and your streak.{isWeb ? '' : ' Pull down to refresh.'}
           </Text>
         ) : null}
       </>
@@ -236,7 +237,7 @@ function FriendItem({ row, last }: { row: FriendRow; last: boolean }) {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   addLink: { color: colors.primaryText, fontSize: 17, fontWeight: '700', padding: spacing.xs },
   bigEmoji: { fontSize: 40 },

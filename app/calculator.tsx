@@ -19,7 +19,7 @@ import {
 } from '../src/domain/waterCalculator';
 import { useSettings } from '../src/state/settingsStore';
 import { Banner, Button, Card, Row, SectionTitle, Segmented, Stepper, Toggle } from '../src/ui/components';
-import { makeStyles, radius, spacing, useTheme } from '../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../src/ui/theme';
 
 const SEX_OPTIONS: readonly Sex[] = ['female', 'male', 'unspecified'];
 const SEX_LABELS: Record<Sex, string> = { female: 'Female', male: 'Male', unspecified: 'Prefer not to say' };
@@ -212,7 +212,7 @@ const useStyles = makeStyles((colors, type) =>
     backgroundColor: colors.card,
   },
   done: { color: colors.primaryText, fontSize: 17, fontWeight: '600', padding: spacing.xs },
-  content: { padding: spacing.lg },
+  content: { ...READABLE_WIDTH, padding: spacing.lg },
   weightRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   weightInput: {
     width: '100%',

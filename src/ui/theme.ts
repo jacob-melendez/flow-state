@@ -112,6 +112,9 @@ export const palettes: Record<ColorScheme, Palette> = {
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
 
+/** Keeps screen content a comfortable width on tablets and desktop browsers. */
+export const READABLE_WIDTH = { width: '100%', maxWidth: 560, alignSelf: 'center' } as const;
+
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 };
 
 export interface TypeScale {

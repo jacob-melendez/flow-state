@@ -151,6 +151,8 @@ export function Toggle({
       trackColor={{ true: colors.primary, false: colors.border }}
       thumbColor="#FFFFFF"
       ios_backgroundColor={colors.border}
+      // react-native-web uses a separate color for the "on" thumb (teal by default).
+      {...({ activeThumbColor: '#FFFFFF' } as object)}
     />
   );
 }

@@ -6,7 +6,7 @@ import { sendCode } from '../../src/cloud/account';
 import { completeStanfordEmail, isStanfordEmail } from '../../src/cloud/email';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 export default function SignInScreen() {
   const styles = useStyles();
@@ -80,7 +80,7 @@ export default function SignInScreen() {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
+  content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   input: {

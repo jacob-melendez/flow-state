@@ -31,7 +31,14 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "name": "Flow State",
+      "shortName": "Flow State",
+      "description": "Track your water, hit your daily goal, and stay hydrated with friends. A SENSA project at Stanford.",
+      "lang": "en",
+      "themeColor": "#8C1515",
+      "backgroundColor": "#F7F5F2"
     },
     "plugins": [
       "expo-router",

@@ -62,6 +62,8 @@ function AppShell() {
     reportImpactStats();
 
     (async () => {
+      // Reminders exist only in the phone apps (the website is a companion).
+      if (!native) return;
       await configureNotifications();
       bindStoreSync();
       // An action tapped while the app was closed is delivered here on launch.
@@ -74,8 +76,10 @@ function AppShell() {
 
     const appStateSub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        usePermission.getState().refresh();
-        syncReminders();
+        if (native) {
+          usePermission.getState().refresh();
+          syncReminders();
+        }
         requestCloudSync();
         reportImpactStats();
       }

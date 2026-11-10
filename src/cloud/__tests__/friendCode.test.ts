@@ -24,5 +24,12 @@ describe('friend codes', () => {
     const msg = friendShareMessage('abcdefgh');
     expect(msg).toContain('ABCD-EFGH');
     expect(msg).toContain('flowstate://add-friend/ABCDEFGH');
+    expect(msg).not.toContain('https://');
+  });
+
+  it('adds a web link when the website address is known', () => {
+    const msg = friendShareMessage('abcd-efgh', 'https://flowstate.example.org/');
+    expect(msg).toContain('https://flowstate.example.org/add-friend/ABCDEFGH');
+    expect(msg).toContain('flowstate://add-friend/ABCDEFGH');
   });
 });

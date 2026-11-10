@@ -8,13 +8,15 @@ import { sendTestReminder } from '../../src/notifications/adapter';
 import { usePermission } from '../../src/state/permissionStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { cloudEnabled } from '../../src/cloud/client';
+import { supportsReminders } from '../../src/platform';
 import { AccountCard } from '../../src/ui/AccountCard';
+import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { STANFORD_LOGO } from '../../src/ui/brandAssets';
 import { SensaLogo } from '../../src/ui/SensaLogo';
 import { Button, Card, Row, SectionTitle, Segmented, Toggle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
-import { makeStyles, spacing, useTheme } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, spacing, useTheme } from '../../src/ui/theme';
 import type { AppearancePreference } from '../../src/ui/theme';
 
 const APPEARANCE_OPTIONS = ['system', 'light', 'dark'] as const;
@@ -62,49 +64,62 @@ export default function SettingsScreen() {
         />
       </Card>
 
-      <SectionTitle>Reminders</SectionTitle>
-      <Card style={{ gap: spacing.md }}>
-        <Row label="Water reminders">
-          <Toggle value={enabled} onValueChange={setEnabled} />
-        </Row>
-        <ReminderStatus />
-      </Card>
-
-      {enabled ? (
+      {supportsReminders ? (
         <>
-          <SectionTitle>Remind me every</SectionTitle>
-          <Card>
-            <IntervalField />
-          </Card>
+        <SectionTitle>Reminders</SectionTitle>
+        <Card style={{ gap: spacing.md }}>
+          <Row label="Water reminders">
+            <Toggle value={enabled} onValueChange={setEnabled} />
+          </Row>
+          <ReminderStatus />
+        </Card>
 
-          <SectionTitle>Active hours</SectionTitle>
-          <Card>
-            <ActiveHoursFields />
-          </Card>
+        {enabled ? (
+          <>
+            <SectionTitle>Remind me every</SectionTitle>
+            <Card>
+              <IntervalField />
+            </Card>
 
-          <SectionTitle>Pause</SectionTitle>
-          <Card>
-            <PauseControls />
-          </Card>
+            <SectionTitle>Active hours</SectionTitle>
+            <Card>
+              <ActiveHoursFields />
+            </Card>
+
+            <SectionTitle>Pause</SectionTitle>
+            <Card>
+              <PauseControls />
+            </Card>
+          </>
+        ) : null}
         </>
-      ) : null}
+      ) : (
+        <>
+          <SectionTitle>Reminders</SectionTitle>
+          <GetTheAppCard />
+        </>
+      )}
 
       <SectionTitle>Goal</SectionTitle>
       <Card>
         <GoalField />
       </Card>
 
-      <SectionTitle>Try it</SectionTitle>
-      <Card style={{ gap: spacing.sm }}>
-        <Button
-          variant="secondary"
-          label={testSent ? 'Sent! Arriving in ~10 seconds…' : 'Send a test reminder'}
-          onPress={onTest}
-          disabled={testSent}
-          accessibilityHint="Schedules a sample reminder 10 seconds from now"
-        />
-        <Text style={type.caption}>Lock your phone after tapping to see how reminders look.</Text>
-      </Card>
+      {supportsReminders ? (
+        <>
+        <SectionTitle>Try it</SectionTitle>
+        <Card style={{ gap: spacing.sm }}>
+          <Button
+            variant="secondary"
+            label={testSent ? 'Sent! Arriving in ~10 seconds…' : 'Send a test reminder'}
+            onPress={onTest}
+            disabled={testSent}
+            accessibilityHint="Schedules a sample reminder 10 seconds from now"
+          />
+          <Text style={type.caption}>Lock your phone after tapping to see how reminders look.</Text>
+        </Card>
+        </>
+      ) : null}
 
       {cloudEnabled || PRIVACY_POLICY_URL ? (
         <>
@@ -175,7 +190,7 @@ export default function SettingsScreen() {
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-    content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+    content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
     aboutHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     stanfordLogo: { width: 64, height: 64, marginTop: spacing.lg, alignSelf: 'flex-start' },
     link: { color: colors.primaryText, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
