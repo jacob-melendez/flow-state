@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Share, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { useAccount } from '../../src/cloud/account';
 import { completeStanfordEmail, isStanfordEmail } from '../../src/cloud/email';
@@ -8,11 +8,13 @@ import { formatFriendCode, friendShareMessage, isValidFriendCode } from '../../s
 import { sendFriendRequest } from '../../src/cloud/friends';
 import { Banner, Button, Card, SectionTitle } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 type Result = { ok: boolean; message: string } | null;
 
 export default function AddFriendScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const params = useLocalSearchParams<{ code?: string }>();
   const { status, friendCode } = useAccount();
   const [code, setCode] = useState(params.code ? formatFriendCode(params.code) : '');
@@ -138,10 +140,11 @@ export default function AddFriendScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.sm },
   muted: { ...type.body, color: colors.muted, lineHeight: 22 },
-  myCode: { fontSize: 34, fontWeight: '800', letterSpacing: 3, color: colors.primaryDark },
+  myCode: { fontSize: 34, fontWeight: '800', letterSpacing: 3, color: colors.primaryText },
   input: {
     fontSize: 18,
     color: colors.text,
@@ -151,4 +154,4 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   codeInput: { fontSize: 22, fontWeight: '700', letterSpacing: 2, textAlign: 'center' },
-});
+}));

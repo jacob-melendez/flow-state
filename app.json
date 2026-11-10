@@ -6,12 +6,7 @@
     "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F3F7FB"
-    },
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "org.sensaimpactlabs.flowstate",
       "supportsTablet": false,
@@ -42,7 +37,19 @@
           "enableRemoteNotifications": false
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F5F2",
+          "dark": {
+            "backgroundColor": "#141312"
+          }
+        }
+      ]
     ]
   }
 }

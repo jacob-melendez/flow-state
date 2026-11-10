@@ -7,7 +7,7 @@ import { maxWindowMinutes } from '../scheduling/buildSchedule';
 import { useSettings } from '../state/settingsStore';
 import { Banner, Row, Segmented, Stepper } from './components';
 import { TimeField } from './TimeField';
-import { colors, spacing, type } from './theme';
+import { spacing, useTheme } from './theme';
 
 const intervalLabel = (m: number) => (m === 60 ? '1 hour' : `${m} min`);
 
@@ -17,6 +17,7 @@ export function IntervalField() {
 }
 
 export function ActiveHoursFields() {
+  const { type } = useTheme();
   const { activeStartMin, activeEndMin, intervalMinutes, windowWasClamped, setActiveWindow } = useSettings();
   const count = slotCount(activeStartMin, activeEndMin, intervalMinutes);
   return (
@@ -44,6 +45,7 @@ export function ActiveHoursFields() {
 }
 
 export function GoalField() {
+  const { colors } = useTheme();
   const { dailyGoal, setDailyGoal } = useSettings();
   return (
     <View>
@@ -61,7 +63,7 @@ export function GoalField() {
         accessibilityRole="button"
         accessibilityHint="Opens the water calculator"
         onPress={() => router.push('/calculator')}
-        style={{ color: colors.primary, fontSize: 15, fontWeight: '600', paddingTop: spacing.sm }}
+        style={{ color: colors.primaryText, fontSize: 15, fontWeight: '600', paddingTop: spacing.sm }}
       >
         Not sure? Calculate my goal →
       </Text>

@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { deleteAccount, requestCloudSync, signOut, useAccount } from '../cloud/account';
 import { replaceLocalDataWith } from '../cloud/cloudSync';
 import { setDiscoverableByEmail } from '../cloud/friends';
 import { useLog } from '../state/logStore';
-import { Banner, Button, Card, Row } from './components';
-import { colors, spacing, type } from './theme';
+import { Banner, Button, Card, Row, Toggle } from './components';
+import { makeStyles, spacing, useTheme } from './theme';
 import { useNow } from './useNow';
 
 function ago(t: number, now: number): string {
@@ -21,6 +21,8 @@ function ago(t: number, now: number): string {
 
 /** Settings → Account. Hidden entirely when the app has no backend configured. */
 export function AccountCard() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const now = useNow(30_000);
   const { status, email, displayName, syncing, syncError, userId, friendCode, discoverableByEmail } = useAccount();
   const { lastSyncedAt, ownerUserId, dirtyEntryIds } = useLog();
@@ -118,14 +120,13 @@ export function AccountCard() {
 
       {friendCode ? (
         <Row label="Let friends find me by email" hint="Friends can always add you with your friend code.">
-          <Switch
+          <Toggle
             accessibilityLabel="Let friends find me by email"
             value={discoverableByEmail}
             onValueChange={async (v) => {
               const err = await setDiscoverableByEmail(v);
               if (err) Alert.alert('Couldn’t update setting', err);
             }}
-            trackColor={{ true: colors.primary }}
           />
         </Row>
       ) : null}
@@ -143,9 +144,10 @@ export function AccountCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  link: { color: colors.primary, fontWeight: '600', fontSize: 15, padding: spacing.xs },
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+  link: { color: colors.primaryText, fontWeight: '600', fontSize: 15, padding: spacing.xs },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.xs },
   danger: { color: colors.danger, textAlign: 'center', fontSize: 15, paddingVertical: spacing.sm },
-});
+}));

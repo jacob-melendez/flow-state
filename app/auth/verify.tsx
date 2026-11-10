@@ -1,12 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { requestCloudSync, sendCode, signOut, verifyCode } from '../../src/cloud/account';
 import { replaceLocalDataWith } from '../../src/cloud/cloudSync';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 const CODE_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -26,6 +26,8 @@ function confirmReplace(email: string): Promise<boolean> {
 }
 
 export default function VerifyScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +121,8 @@ export default function VerifyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
@@ -133,4 +136,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingVertical: spacing.md,
   },
-});
+}));

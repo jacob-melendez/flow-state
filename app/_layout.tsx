@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
-import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AppState, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -13,10 +13,36 @@ import { configureNotifications } from '../src/notifications/adapter';
 import { useHydrated } from '../src/state/hydration';
 import { usePermission } from '../src/state/permissionStore';
 import { bindStoreSync, handleNotificationResponse, syncReminders } from '../src/sync';
-import { colors } from '../src/ui/theme';
+import { useTheme } from '../src/ui/theme';
+import { ThemeProvider } from '../src/ui/ThemeProvider';
 
 export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppShell />
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AppShell() {
+  const { colors, scheme } = useTheme();
   const hydrated = useHydrated();
+  const navigationTheme = useMemo(() => {
+    const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: colors.primaryText,
+        background: colors.background,
+        card: colors.chrome,
+        text: colors.text,
+        border: colors.border,
+      },
+    };
+  }, [scheme, colors]);
 
   useEffect(() => {
     // Notification action buttons only exist on iOS/Android.
@@ -55,8 +81,8 @@ export default function RootLayout() {
   if (!hydrated) return null;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
+    <NavigationThemeProvider value={navigationTheme}>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
@@ -64,6 +90,6 @@ export default function RootLayout() {
         <Stack.Screen name="auth" options={{ presentation: 'modal' }} />
         <Stack.Screen name="friends/add" options={{ presentation: 'modal' }} />
       </Stack>
-    </SafeAreaProvider>
+    </NavigationThemeProvider>
   );
 }

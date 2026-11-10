@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ReactNode, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cloudEnabled } from '../src/cloud/client';
@@ -9,11 +9,13 @@ import { usePermission } from '../src/state/permissionStore';
 import { useSettings } from '../src/state/settingsStore';
 import { Button, Card } from '../src/ui/components';
 import { ActiveHoursFields, GoalField, IntervalField } from '../src/ui/ReminderSettingsForm';
-import { colors, spacing, type } from '../src/ui/theme';
+import { makeStyles, spacing, useTheme } from '../src/ui/theme';
 
 const STEPS = ['welcome', 'interval', 'hours', 'goal', 'notifications'] as const;
 
 export default function OnboardingScreen() {
+  const styles = useStyles();
+  const { type } = useTheme();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const completeOnboarding = useSettings((s) => s.completeOnboarding);
@@ -112,6 +114,8 @@ export default function OnboardingScreen() {
 }
 
 function Step({ emoji, title, subtitle, children }: { emoji: string; title: string; subtitle?: string; children: ReactNode }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   return (
     <View style={{ gap: spacing.lg }}>
       <Text style={styles.emoji}>{emoji}</Text>
@@ -124,11 +128,12 @@ function Step({ emoji, title, subtitle, children }: { emoji: string; title: stri
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   dotActive: { backgroundColor: colors.primary, width: 24 },
   emoji: { fontSize: 56 },
   body: { ...type.body, lineHeight: 24 },
-});
+}));

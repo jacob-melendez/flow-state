@@ -13,6 +13,7 @@ import {
 } from '../config';
 import { CalculatorInput } from '../domain/waterCalculator';
 import { ReminderSettings, clampWindow } from '../scheduling/buildSchedule';
+import type { AppearancePreference } from '../ui/theme';
 import { deviceStorage } from './storage';
 
 export interface SettingsState extends ReminderSettings {
@@ -28,6 +29,8 @@ export interface SettingsState extends ReminderSettings {
   shareImpactStats: boolean;
   installId: string | null;
   impactReportedThrough: string | null;
+  /** Light/dark mode: follow the device (default) or force one. */
+  appearance: AppearancePreference;
 
   setEnabled: (enabled: boolean) => void;
   setInterval: (interval: IntervalMinutes) => void;
@@ -40,6 +43,7 @@ export interface SettingsState extends ReminderSettings {
   completeOnboarding: () => void;
   setCalculatorProfile: (profile: CalculatorInput) => void;
   setShareImpactStats: (share: boolean) => void;
+  setAppearance: (appearance: AppearancePreference) => void;
 }
 
 const clampGoal = (goal: number) => Math.max(MIN_GOAL_CUPS, Math.min(MAX_GOAL_CUPS, Math.round(goal)));
@@ -60,6 +64,7 @@ export const useSettings = create<SettingsState>()(
       shareImpactStats: IMPACT_STATS_DEFAULT,
       installId: null,
       impactReportedThrough: null,
+      appearance: 'system',
 
       setEnabled: (enabled) => set({ enabled, pausedUntil: null }),
       setInterval: (intervalMinutes) => {
@@ -80,6 +85,7 @@ export const useSettings = create<SettingsState>()(
       completeOnboarding: () => set({ onboarded: true }),
       setCalculatorProfile: (calculatorProfile) => set({ calculatorProfile }),
       setShareImpactStats: (shareImpactStats) => set({ shareImpactStats }),
+      setAppearance: (appearance) => set({ appearance }),
     }),
     {
       name: 'flow-state/settings',
@@ -98,6 +104,7 @@ export const useSettings = create<SettingsState>()(
         shareImpactStats,
         installId,
         impactReportedThrough,
+        appearance,
       }) => ({
         enabled,
         intervalMinutes,
@@ -111,6 +118,7 @@ export const useSettings = create<SettingsState>()(
         shareImpactStats,
         installId,
         impactReportedThrough,
+        appearance,
       }),
       // Add cases here when the stored shape changes (e.g. accounts in v2).
       migrate: (persisted) => persisted as SettingsState,

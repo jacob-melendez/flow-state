@@ -11,12 +11,14 @@ import { useSettings } from '../../src/state/settingsStore';
 import { Card, SectionTitle } from '../../src/ui/components';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 import { useNow } from '../../src/ui/useNow';
 
 const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function TodayScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const insets = useSafeAreaInsets();
   const now = useNow(60_000);
   const goal = useSettings((s) => s.dailyGoal);
@@ -113,7 +115,7 @@ export default function TodayScreen() {
                   <View
                     style={[
                       styles.barFill,
-                      { height: `${Math.max(fill * 100, d.count > 0 ? 6 : 0)}%`, backgroundColor: d.met ? colors.success : colors.primary },
+                      { height: `${Math.max(fill * 100, d.count > 0 ? 6 : 0)}%`, backgroundColor: d.met ? colors.success : colors.water },
                     ]}
                   />
                 </View>
@@ -129,7 +131,8 @@ export default function TodayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
   ringWrap: { alignItems: 'center', marginVertical: spacing.xl },
   count: { fontSize: 56, fontWeight: '800', color: colors.text, lineHeight: 62 },
@@ -140,8 +143,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg + 2,
     alignItems: 'center',
   },
-  logButtonText: { color: colors.white, fontSize: 20, fontWeight: '700' },
-  undo: { textAlign: 'center', color: colors.primary, marginTop: spacing.md, fontSize: 15, padding: spacing.xs },
+  logButtonText: { color: colors.onPrimary, fontSize: 20, fontWeight: '700' },
+  undo: { textAlign: 'center', color: colors.primaryText, marginTop: spacing.md, fontSize: 15, padding: spacing.xs },
   streakRow: { flexDirection: 'row', alignItems: 'center' },
   streakItem: { flex: 1, alignItems: 'center' },
   streakValue: { fontSize: 26, fontWeight: '700', color: colors.text },
@@ -152,9 +155,9 @@ const styles = StyleSheet.create({
     width: 18,
     height: 80,
     borderRadius: 9,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.waterSoft,
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   barFill: { width: '100%', borderRadius: 9 },
-});
+}));

@@ -1,11 +1,11 @@
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, Text, View, StyleSheet } from 'react-native';
 
 import { formatMinuteOfDay, minuteOfDay } from '../domain/time';
 import { buildSchedule, isPaused, nextReminderAt, pauseForHours, pauseUntilTomorrow } from '../scheduling/buildSchedule';
 import { usePermission } from '../state/permissionStore';
 import { reminderSettingsOf, useSettings } from '../state/settingsStore';
 import { Banner, Button } from './components';
-import { colors, radius, spacing, type } from './theme';
+import { makeStyles, radius, spacing, useTheme } from './theme';
 import { useNow } from './useNow';
 
 function formatTime(t: number, now: number): string {
@@ -54,6 +54,8 @@ export function ReminderStatus() {
 
 /** Pause/resume chips. */
 export function PauseControls() {
+  const styles = useStyles();
+  const { type } = useTheme();
   const now = useNow();
   const { enabled, pausedUntil, activeStartMin, pauseUntil, resume } = useSettings();
   if (!enabled) return null;
@@ -88,11 +90,12 @@ export function PauseControls() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
     backgroundColor: colors.primarySoft,
-    color: colors.primaryDark,
+    color: colors.onPrimarySoft,
     fontWeight: '600',
     fontSize: 15,
     paddingHorizontal: spacing.lg,
@@ -100,4 +103,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-});
+}));

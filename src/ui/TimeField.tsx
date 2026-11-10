@@ -1,11 +1,13 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View, StyleSheet } from 'react-native';
 
 import { formatMinuteOfDay, minuteOfDay, normalizeMinuteOfDay } from '../domain/time';
-import { colors, radius, spacing } from './theme';
+import { makeStyles, radius, spacing, useTheme } from './theme';
 
 /** Picks a time of day (minutes after midnight) in 15-minute steps. */
 export function TimeField({ label, minute, onChange }: { label: string; minute: number; onChange: (m: number) => void }) {
+  const styles = useStyles();
+  const { scheme, colors } = useTheme();
   const value = new Date(2000, 0, 1, Math.floor(minute / 60), minute % 60);
   const roundTo15 = (d: Date) => normalizeMinuteOfDay(Math.round(minuteOfDay(d) / 15) * 15);
 
@@ -16,6 +18,8 @@ export function TimeField({ label, minute, onChange }: { label: string; minute: 
         value={value}
         mode="time"
         display="compact"
+        themeVariant={scheme}
+        accentColor={colors.primaryText}
         minuteInterval={15}
         onValueChange={(_, date) => onChange(roundTo15(date))}
       />
@@ -56,13 +60,14 @@ export function TimeField({ label, minute, onChange }: { label: string; minute: 
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   pill: {
     backgroundColor: colors.primarySoft,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  pillText: { fontSize: 16, color: colors.primaryDark, fontWeight: '600' },
+  pillText: { fontSize: 16, color: colors.onPrimarySoft, fontWeight: '600' },
   webRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-});
+}));

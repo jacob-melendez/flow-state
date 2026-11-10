@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { updateDisplayName, useAccount } from '../../src/cloud/account';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 /** Sets the display name (shown on first sign-in, and from Settings to edit it). */
 export default function ProfileScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const current = useAccount((s) => s.displayName);
   const [name, setName] = useState(current ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,8 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
@@ -72,4 +75,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
-});
+}));

@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Switch, Text } from 'react-native';
+import { Alert, Linking, ScrollView, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_FULL_NAME, ORG_NAME, PRIVACY_POLICY_URL } from '../../src/config';
@@ -9,14 +9,20 @@ import { usePermission } from '../../src/state/permissionStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { cloudEnabled } from '../../src/cloud/client';
 import { AccountCard } from '../../src/ui/AccountCard';
-import { Button, Card, Row, SectionTitle } from '../../src/ui/components';
+import { Button, Card, Row, SectionTitle, Segmented, Toggle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
-import { colors, spacing, type } from '../../src/ui/theme';
+import { makeStyles, spacing, useTheme } from '../../src/ui/theme';
+import type { AppearancePreference } from '../../src/ui/theme';
+
+const APPEARANCE_OPTIONS = ['system', 'light', 'dark'] as const;
+const APPEARANCE_LABELS: Record<AppearancePreference, string> = { system: 'System', light: 'Light', dark: 'Dark' };
 
 export default function SettingsScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const insets = useSafeAreaInsets();
-  const { enabled, setEnabled, shareImpactStats, setShareImpactStats } = useSettings();
+  const { enabled, setEnabled, shareImpactStats, setShareImpactStats, appearance, setAppearance } = useSettings();
   const permission = usePermission((s) => s.permission);
   const [testSent, setTestSent] = useState(false);
 
@@ -44,10 +50,20 @@ export default function SettingsScreen() {
         </>
       ) : null}
 
+      <SectionTitle>Appearance</SectionTitle>
+      <Card>
+        <Segmented
+          options={APPEARANCE_OPTIONS}
+          value={appearance}
+          onChange={setAppearance}
+          format={(o) => APPEARANCE_LABELS[o]}
+        />
+      </Card>
+
       <SectionTitle>Reminders</SectionTitle>
       <Card style={{ gap: spacing.md }}>
         <Row label="Water reminders">
-          <Switch value={enabled} onValueChange={setEnabled} trackColor={{ true: colors.primary }} />
+          <Toggle value={enabled} onValueChange={setEnabled} />
         </Row>
         <ReminderStatus />
       </Card>
@@ -95,11 +111,10 @@ export default function SettingsScreen() {
             {cloudEnabled ? (
               <>
                 <Row label="Share anonymous usage stats">
-                  <Switch
+                  <Toggle
                     accessibilityLabel="Share anonymous usage stats"
                     value={shareImpactStats}
                     onValueChange={setShareImpactStats}
-                    trackColor={{ true: colors.primary }}
                   />
                 </Row>
                 <Text style={[type.caption, { lineHeight: 19 }]}>
@@ -121,7 +136,7 @@ export default function SettingsScreen() {
       <SectionTitle>About</SectionTitle>
       <Card style={{ gap: spacing.xs }}>
         <Text style={type.heading}>{APP_FULL_NAME}</Text>
-        <Text style={[type.caption, { color: colors.cardinal }]}>{ORG_NAME}</Text>
+        <Text style={[type.caption, { color: colors.primaryText }]}>{ORG_NAME}</Text>
         <Text style={[type.body, { marginTop: spacing.sm, lineHeight: 22 }]}>
           Built to make water awareness and access part of everyday student life.
         </Text>
@@ -136,7 +151,8 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  link: { color: colors.primary, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
-});
+  link: { color: colors.primaryText, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
+}));
