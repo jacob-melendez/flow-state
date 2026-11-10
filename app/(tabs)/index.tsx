@@ -4,12 +4,14 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CUP_OZ } from '../../src/config';
+import { buddyState } from '../../src/domain/buddy';
 import { bestStreak, countsByDay, currentStreak, lastNDays } from '../../src/domain/streaks';
 import { dateKey, parseDateKey } from '../../src/domain/time';
 import { useLog } from '../../src/state/logStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { Card, SectionTitle } from '../../src/ui/components';
 import { ProgressRing } from '../../src/ui/ProgressRing';
+import { WaterBuddy } from '../../src/ui/WaterBuddy';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 import { useNow } from '../../src/ui/useNow';
@@ -55,14 +57,15 @@ export default function TodayScreen() {
       <Text style={type.title}>Today</Text>
 
       <View style={styles.ringWrap}>
-        <ProgressRing progress={stats.today / goal}>
-          <Text style={styles.count} accessibilityLabel={`${stats.today} of ${goal} cups today`}>
-            {stats.today}
-          </Text>
-          <Text style={type.caption}>of {goal} cups</Text>
-          <Text style={[type.caption, { marginTop: 2 }]}>{stats.today * CUP_OZ} oz</Text>
+        <ProgressRing progress={stats.today / goal} size={240}>
+          <WaterBuddy cups={stats.today} goal={goal} size={160} />
         </ProgressRing>
-        {met ? <Text style={styles.metText}>Goal reached. Nice work! 🎉</Text> : null}
+        <Text style={styles.count} accessibilityLabel={`${stats.today} of ${goal} cups today`}>
+          {stats.today} <Text style={styles.countOf}>of {goal} cups</Text>
+        </Text>
+        <Text style={[type.caption, styles.caption, met && styles.metText]}>
+          {stats.today * CUP_OZ} oz · {buddyState(stats.today, goal).caption}
+        </Text>
       </View>
 
       <Pressable
@@ -135,8 +138,10 @@ const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
   ringWrap: { alignItems: 'center', marginVertical: spacing.xl },
-  count: { fontSize: 56, fontWeight: '800', color: colors.text, lineHeight: 62 },
-  metText: { marginTop: spacing.md, color: colors.success, fontWeight: '600', fontSize: 16 },
+  count: { fontSize: 34, fontWeight: '800', color: colors.water, marginTop: spacing.md },
+  countOf: { fontSize: 18, fontWeight: '600', color: colors.muted },
+  caption: { marginTop: spacing.xs, fontSize: 15, textAlign: 'center' },
+  metText: { color: colors.success, fontWeight: '600' },
   logButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.lg,
