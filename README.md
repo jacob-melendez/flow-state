@@ -2,7 +2,9 @@
 
 SENSA Impact Labs Fall 2026, Health & Wellness Group (Stanford Flow State). This repository holds the Flow State app.
 
-Flow State reminds Stanford students to drink water every **15 minutes, 30 minutes or 1 hour** during the hours they choose. Students can log cups toward a daily goal and build streaks.
+Flow State reminds Stanford students to drink water every **15 minutes, 30 minutes or 1 hour** during the hours they choose. Students can log cups toward a daily goal, watch their water buddy fill up, and build streaks with friends.
+
+It runs on **iPhone, Android and the web**. The website is a companion without reminders; see [docs/deploy-web.md](docs/deploy-web.md).
 
 The app works fully offline. Students can optionally **sign in with their Stanford email** to back up their water log and use it on more than one phone. Reminder settings and calculator answers never leave the phone. Version 1 (tag `v1.0.0`) was entirely on-device.
 
@@ -12,10 +14,13 @@ The app works fully offline. Students can optionally **sign in with their Stanfo
 - **Active hours**: reminders only arrive within a daily window, e.g. 9:00 AM–9:00 PM. The window can cross midnight.
 - **Log a drink**: a "+1 cup" button in the app, with undo. Each cup is 8 oz, and the default goal is 8 cups.
   - Notifications also have **"I drank a cup 💧"** and **"Snooze 1 hr"** buttons. To see them, press and hold a notification, or swipe it left and tap View. Test them in a development build; they may not appear in Expo Go.
+- **Water buddy**: a droplet character in the Today ring. It grows, fills with water and gets happier with each cup, from thirsty to thrilled with sparkles at the goal.
+- **Light and dark mode**: follows the device by default; Settings → Appearance can force Light or Dark. The design uses Stanford Cardinal for actions and Stanford teal for water.
+- **Branding**: a launch screen with Flow State and SENSA's logo, and an About section that names Flow State as a SENSA student-organization project. See *Design and brand rules* below.
 - **Daily goal and streaks**: a progress ring, the current and best streaks, and a 7-day chart. The goal is recorded for each day, so changing it doesn't rewrite past streaks.
 - **Water calculator**: suggests a daily goal from weight, sex, exercise, hot weather, and pregnancy/breastfeeding, with a breakdown and a one-tap "Set as my daily goal". Answers stay on the phone. To open it, tap "Not sure? Calculate my goal" (in onboarding or Settings → Goal). The method and all its numbers are documented at the top of `src/domain/waterCalculator.ts` so the health team can review them. It is an estimate, not medical advice.
 - **Pause**: for 1 hour, 2 hours, or the rest of today. The Settings switch turns reminders off entirely.
-- **Onboarding**: interval, then active hours, then goal, then the notification permission prompt.
+- **Onboarding**: interval, then active hours, then goal, then the notification permission prompt. On the website: welcome, then goal.
 - **Test reminder**: Settings → "Send a test reminder" fires one 10 seconds later.
 - **Friends (with an account)**: add friends by friend code, an invite link, or their exact Stanford email. The Friends tab shows each friend's cups today vs their goal and their streak, plus requests to accept or decline. Friends see only your name, today's cups and your streak; incoming requests also show the sender's Stanford email. Students can remove or block anyone, and can turn off being found by email.
 - **Anonymous impact stats (optional, on by default)**: daily cup totals with a random ID, never linked to an account, for SENSA's impact reports. Students can turn it off in Settings → Privacy.
@@ -29,15 +34,15 @@ The app works fully offline. Students can optionally **sign in with their Stanfo
 - [Supabase](https://supabase.com) (Postgres, sign-in, row-level security) provides the optional accounts and backup. With no Supabase settings, the app runs offline.
 - Jest tests the app logic. The database rules are tested with `node --test` and [PGlite](https://pglite.dev), an in-process Postgres.
 
-One codebase covers iOS, Android and web. iOS is the focus for v1; Android should mostly work as is. Web runs the app UI, but reminders don't work on web.
+One codebase covers iOS, Android and web. Phones schedule reminders themselves; the website has everything except reminders. See [docs/android.md](docs/android.md) and [docs/deploy-web.md](docs/deploy-web.md).
 
 ## Getting started
 
 ### Prerequisites
 
 - Node.js 20 or newer.
-- An iPhone with the **Expo Go** app from the App Store. This is the quickest way to try the app.
-- To install a real build on your phone you also need a Mac with Xcode. A free Apple ID is enough. See *Running on your iPhone without Expo Go* below.
+- An iPhone or Android phone with the **Expo Go** app (App Store / Google Play). This is the quickest way to try the app.
+- To install a real build on an iPhone you need a Mac with Xcode (a free Apple ID is enough). Android builds need no Mac; see [docs/android.md](docs/android.md). See *Running on your iPhone without Expo Go* below.
 
 ### Run with Expo Go (quickest)
 
@@ -49,7 +54,7 @@ npm install
 npx expo start
 ```
 
-Scan the QR code with the iPhone Camera app to open the project in Expo Go. The phone and the computer must be on the same Wi-Fi network. If they can't connect, for example on campus Wi-Fi, run `npx expo start --tunnel`.
+Scan the QR code (iPhone: the Camera app; Android: the Expo Go app) to open the project in Expo Go. The phone and the computer must be on the same Wi-Fi network. If they can't connect, for example on campus Wi-Fi, run `npx expo start --tunnel`.
 
 Expo Go is fine for trying the UI, scheduled reminders, logging and pausing. Test notification **action buttons** and the background refresh in a development build, described next. Expo Go may not support them.
 
@@ -69,6 +74,10 @@ Expo Go is fine for trying the UI, scheduled reminders, logging and pausing. Tes
 
 Free Apple ID builds expire after 7 days; run the command again to reinstall. Remote push is turned off in `app.json` (`enableRemoteNotifications: false`). This lets a free account sign the app, and v1 doesn't use push anyway.
 
+**Android:** see [docs/android.md](docs/android.md) to install a real APK without the Play Store (`npx eas-cli@latest build -p android --profile preview`).
+
+**Website:** `npx expo start --web` runs it locally. `npm run build:web` builds it for hosting; see [docs/deploy-web.md](docs/deploy-web.md).
+
 ### Later: TestFlight and the App Store
 
 Once the team has an [Apple Developer Program](https://developer.apple.com/programs/) membership ($99/yr):
@@ -81,7 +90,7 @@ npx eas-cli@latest build --platform ios --profile production
 npx eas-cli@latest submit --platform ios
 ```
 
-The first build creates `eas.json` and handles signing. The bundle identifier in `app.json` (`org.sensaimpactlabs.flowstate`) is a **placeholder**. Change it to a domain the team controls before the first App Store build, because it can't be changed afterwards.
+`eas.json` already has `preview` and `production` profiles, and EAS handles signing. The bundle identifier in `app.json` (`org.sensaimpactlabs.flowstate`) is a **placeholder**. Change it to a domain the team controls before the first App Store build, because it can't be changed afterwards.
 
 ## Scripts
 
@@ -91,6 +100,7 @@ The first build creates `eas.json` and handles signing. The bundle identifier in
 | `npm test` | Run unit tests (in `America/Los_Angeles`, so daylight-saving cases are real) |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint` | ESLint (Expo config) |
+| `npm run build:web` | Build the website into `dist/` |
 | `npm run test:db` | Database tests: runs `supabase/migrations` in an in-process Postgres and checks the security rules |
 
 ## How reminders are scheduled
@@ -121,11 +131,11 @@ Accounts are optional and the app is **offline-first**: the phone's copy of the 
 
 ```
 app/                         Screens (Expo Router)
-  _layout.tsx                Startup: load data, notification setup, sync on foreground
+  _layout.tsx                Startup: theme, launch screen, notification setup, sync on foreground
   onboarding.tsx             First-run setup
-  (tabs)/index.tsx           Today: progress ring, +1 cup, reminders, streaks, 7-day chart
+  (tabs)/index.tsx           Today: water buddy, +1 cup, reminders, streaks, 7-day chart
   (tabs)/friends.tsx         Friends: requests, friends' progress, pending requests
-  (tabs)/settings.tsx        Account, reminder settings, goal, pause, test reminder, about
+  (tabs)/settings.tsx        Account, appearance, reminder settings, goal, privacy, about
   friends/add.tsx            Add friends: your code + share, add by code or email
   add-friend/[code].tsx      Invite links (flowstate://add-friend/CODE)
   calculator.tsx             Water calculator (modal)
@@ -133,27 +143,48 @@ app/                         Screens (Expo Router)
 src/
   cloud/                     Supabase client, sign-in, sync engine, merge rules (+ tests)
   config.ts                  Product constants (names, defaults, limits)
-  domain/                    Pure logic: time helpers, streaks, water calculator
+  domain/                    Pure logic: time helpers, streaks, water calculator, water buddy, impact days
   scheduling/                Pure reminder scheduler (+ tests)
   notifications/             expo-notifications adapter, reminder copy
   state/                     On-device stores (settings, drink log, permission)
   sync.ts                    Settings → schedule → OS; notification action handling
   background.ts              Best-effort background re-sync
-  ui/                        Theme and shared components
+  platform.ts                What each platform supports (no reminders on web)
+  ui/                        Theme (light/dark), shared components, water buddy, SENSA logo, launch screen
 supabase/
   migrations/                Database tables, security rules (run once per Supabase project)
   tests/                     Database tests (npm run test:db)
 docs/backend-setup.md        Step-by-step Supabase setup, and how to view impact stats
+docs/android.md              Testing on Android, APK builds, Google Play
+docs/deploy-web.md           Building and hosting the website
+scripts/render-icons.mjs     Regenerates the app icons from the water-buddy artwork
 PRIVACY.md                   Draft privacy policy + App Store privacy answers
 ```
 
 ## Privacy
 
-- **[PRIVACY.md](PRIVACY.md):** a draft privacy policy matching how 2.0.0 works, plus the App Store "App Privacy" answers. Review it, fill in the placeholders, host it publicly, and set `PRIVACY_POLICY_URL` in `src/config.ts` to show it in Settings.
+- **[PRIVACY.md](PRIVACY.md):** a draft privacy policy matching how 3.0.0 works, plus the App Store "App Privacy" and Google Play "Data safety" answers. Review it, fill in the placeholders, host it publicly, and set `PRIVACY_POLICY_URL` in `src/config.ts` to show it in Settings.
 - **Anonymous impact stats (opt-out):** with a backend configured, the app sends, once a day, each recent completed day's cup count and whether the goal was met. It uses a random install ID and never the student's login (`src/cloud/impact.ts`).
   - The switch is Settings → Privacy, and it's disclosed in onboarding.
   - To make it opt-in instead (e.g. if an IRB requires it), set `IMPACT_STATS_DEFAULT = false` in `src/config.ts`.
   - The team views the results in the Supabase dashboard; see [docs/backend-setup.md](docs/backend-setup.md#viewing-impact-stats).
+
+## Design and brand rules
+
+- **Colors:** everything uses the theme in `src/ui/theme.ts`, with a light and a dark palette.
+  - Stanford Cardinal Red (`#8C1515`) for buttons and links; a lighter Cardinal-family red in dark mode so it stays visible.
+  - Stanford Lagunita teal for water visuals.
+  - Stanford neutrals for backgrounds and text.
+  - `src/ui/__tests__/theme.test.ts` checks every text/background pair against WCAG AA contrast.
+- **Stanford name and logo:** SENSA is approved by Stanford Trademarks. Within that approval:
+  - Use only official **Block S with tree** artwork, never the seal. Don't redraw, recolor, stretch, outline or add effects.
+  - **Never combine it with another logo**: keep it separate from SENSA's logo, with clear space.
+  - Don't put Stanford logos in the app icon.
+  - Always make clear Flow State is a SENSA student-organization project.
+  - To show the Block S in About, add the approved files to `assets/brand/` and enable them in `src/ui/brandAssets.ts`.
+  - Questions on scope go to trademark_use@stanford.edu or DesignIdentity@stanford.edu.
+- **SENSA's logo:** `src/ui/SensaLogo.tsx` is redrawn as a vector from SENSA's logo image. Swap in official artwork if SENSA has it.
+- **App icon:** the water buddy on Cardinal, generated by `node scripts/render-icons.mjs`.
 
 ## Coming next
 
@@ -163,3 +194,4 @@ PRIVACY.md                   Draft privacy policy + App Store privacy answers
 
 - **Notification buttons when the app is fully closed.** Tapping "I drank a cup" or "Snooze 1 hr" opens the app, because iOS only reliably passes the tap to a closed app if the app opens. To try silent buttons, set `ACTIONS_OPEN_APP = false` in `src/config.ts`. Those taps then work while the app is in the background, but are lost if the app was swiped away.
 - **Reminders while the phone is in a Focus mode or Do Not Disturb.** iOS may hold them back. This is expected behaviour.
+- **Android:** see the checklist in [docs/android.md](docs/android.md#what-to-check-on-android): permission prompt, back button, reminders after a restart, and battery saver delays.
