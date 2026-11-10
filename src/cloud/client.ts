@@ -26,6 +26,17 @@ export const supabase: SupabaseClient | null =
 
 export const cloudEnabled = supabase !== null;
 
+/**
+ * A second client that never signs in, used only for anonymous impact stats so
+ * those requests can't be tied to the student's account.
+ */
+export const anonymousClient: SupabaseClient | null =
+  url && key
+    ? createClient(url, key, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'flow-state-anonymous' },
+      })
+    : null;
+
 // Refresh the login token only while the app is in the foreground (Supabase's
 // recommended setup for React Native).
 if (supabase && Platform.OS !== 'web') {

@@ -51,6 +51,15 @@ Do the same with `supabase/migrations/20261111000000_friends.sql`: open a new qu
 
 Sign-in and backup keep working if you haven't run it yet; the Friends tab just can't load.
 
+### 2c. Add anonymous impact stats
+
+Run `supabase/migrations/20261112000000_impact_stats.sql` the same way, third in order. It creates:
+- a `usage_daily` table, which nobody can read through the app;
+- a `report_usage` function the app uses to send daily totals;
+- two dashboard-only report views, described under **Viewing impact stats** below.
+
+Until you run it, the app retries quietly each day and nothing breaks.
+
 <details>
 <summary>Prefer the command line? Use the Supabase CLI instead.</summary>
 
@@ -129,6 +138,27 @@ Any SMTP provider works (SendGrid, Postmark, Amazon SES, …). Stanford-hosted o
    4. Try adding by Stanford email. Then turn off Settings → Account → *Let friends find me by email* and check that the email no longer finds you.
    5. Remove the friend, then try **Remove & block**: the blocked account's requests now say "No one found".
 7. Settings → Account → **Delete account** removes your rows from every table, including friendships.
+8. **Impact stats:** log a cup today, then open the app again tomorrow (or change your phone's date forward a day). A row appears in `usage_daily` (Table Editor) for yesterday. With Settings → Privacy → *Share anonymous usage stats* off, nothing is sent.
+
+## Viewing impact stats
+
+In the dashboard, open **SQL Editor** and run:
+
+```sql
+select * from impact_weekly;   -- per week: active installs, active days, total cups, avg cups/day, % of days goal met
+```
+
+```sql
+select * from impact_daily;    -- the same, per day
+```
+
+**What the numbers mean:**
+- A row is sent for each day a student logged **at least one cup**, so *active installs* means phones where someone logged water that week.
+- Students who turned stats off aren't counted.
+- Reinstalling the app creates a new random ID, so totals are approximate.
+- Because the app's key is public, someone determined could submit fake rows. Treat the numbers as indicators, not exact counts.
+
+To export, click **Download CSV** under the results. These views and the table can't be read through the app or API, only by project members in the dashboard.
 
 ## Troubleshooting
 
@@ -141,11 +171,12 @@ Any SMTP provider works (SendGrid, Postmark, Amazon SES, …). Stanford-hosted o
 | "Something went wrong" on sign-in | Check **Authentication → Logs** in the dashboard; make sure the SQL script ran (step 2). |
 | "Delete account" fails | Make sure the SQL script ran completely; it creates `delete_my_account`. |
 | Friends tab says "Couldn't refresh", or there's no friend code | Run `20261111000000_friends.sql` (step 2b). |
+| `usage_daily` stays empty | Run `20261112000000_impact_stats.sql` (step 2c). Only *completed* days with at least one cup are sent, so check the day after logging. Also check the Settings → Privacy switch. |
 | A friend's cups look out of date | Their phone uploads about 2 seconds after they log a cup, but only while online. Pull down to refresh. |
 | Sign-in works but nothing backs up | Check **Database → Logs** for permission errors; re-run the SQL script. |
 
 ## For developers
 
-- **Database tests:** `npm run test:db` runs the migration in an in-process Postgres (PGlite) with a stand-in for Supabase's `auth` schema (`supabase/tests/auth-stub.sql`). They check the Stanford-only rule, row-level security, newest-wins, account deletion, and every friends rule (requests, privacy of what friends see, streaks, blocking). Add a test there whenever you change the SQL.
+- **Database tests:** `npm run test:db` runs the migration in an in-process Postgres (PGlite) with a stand-in for Supabase's `auth` schema (`supabase/tests/auth-stub.sql`). They check the Stanford-only rule, row-level security, newest-wins, account deletion, every friends rule (requests, privacy of what friends see, streaks, blocking), and that impact stats can be sent anonymously but never read through the API. Add a test there whenever you change the SQL.
 - **Schema changes:** add a **new** file in `supabase/migrations/` (don't edit one that has already run), run it in each project, and update the tests.
 - **How the app syncs** is described in `README.md` → *Accounts & sync*.

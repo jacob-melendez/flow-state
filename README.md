@@ -18,6 +18,7 @@ The app works fully offline. Students can optionally **sign in with their Stanfo
 - **Onboarding**: interval, then active hours, then goal, then the notification permission prompt.
 - **Test reminder**: Settings → "Send a test reminder" fires one 10 seconds later.
 - **Friends (with an account)**: add friends by friend code, an invite link, or their exact Stanford email. The Friends tab shows each friend's cups today vs their goal and their streak, plus requests to accept or decline. Friends see only your name, today's cups and your streak; incoming requests also show the sender's Stanford email. Students can remove or block anyone, and can turn off being found by email.
+- **Anonymous impact stats (optional, on by default)**: daily cup totals with a random ID, never linked to an account, for SENSA's impact reports. Students can turn it off in Settings → Privacy.
 - **Accounts & backup (optional)**: sign in with a 6-digit code emailed to a `@stanford.edu` address. The water log and goal sync across phones, and Settings → Account offers sign out and delete account. This needs a Supabase project; see [docs/backend-setup.md](docs/backend-setup.md).
 
 ## Tech stack
@@ -142,14 +143,21 @@ src/
 supabase/
   migrations/                Database tables, security rules (run once per Supabase project)
   tests/                     Database tests (npm run test:db)
-docs/backend-setup.md        Step-by-step Supabase setup
+docs/backend-setup.md        Step-by-step Supabase setup, and how to view impact stats
+PRIVACY.md                   Draft privacy policy + App Store privacy answers
 ```
+
+## Privacy
+
+- **[PRIVACY.md](PRIVACY.md):** a draft privacy policy matching how 2.0.0 works, plus the App Store "App Privacy" answers. Review it, fill in the placeholders, host it publicly, and set `PRIVACY_POLICY_URL` in `src/config.ts` to show it in Settings.
+- **Anonymous impact stats (opt-out):** with a backend configured, the app sends, once a day, each recent completed day's cup count and whether the goal was met. It uses a random install ID and never the student's login (`src/cloud/impact.ts`).
+  - The switch is Settings → Privacy, and it's disclosed in onboarding.
+  - To make it opt-in instead (e.g. if an IRB requires it), set `IMPACT_STATS_DEFAULT = false` in `src/config.ts`.
+  - The team views the results in the Supabase dashboard; see [docs/backend-setup.md](docs/backend-setup.md#viewing-impact-stats).
 
 ## Coming next
 
 - Push "nudges" between friends (needs server push and a paid Apple Developer account).
-- **Anonymous impact stats** for SENSA's reports (opt-out, no account link).
-- Privacy policy and the 2.0.0 release.
 
 ## Things to check on a real device
 
