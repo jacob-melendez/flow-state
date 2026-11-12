@@ -31,7 +31,7 @@ export default function ProfileScreen() {
         <Text style={styles.emoji}>👋</Text>
         <Text style={type.title}>{current ? 'Change your name' : 'You’re signed in!'}</Text>
         <Text style={styles.body}>
-          What should we call you? Friends will see this name when that feature arrives. Use a first name or nickname.
+          What should we call you? Friends will see this name. Use a first name or nickname.
         </Text>
         <Card>
           <TextInput

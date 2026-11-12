@@ -58,6 +58,44 @@ Scan the QR code (iPhone: the Camera app; Android: the Expo Go app) to open the 
 
 Expo Go is fine for trying the UI, scheduled reminders, logging and pausing. Test notification **action buttons** and the background refresh in a development build, described next. Expo Go may not support them.
 
+### Turn on accounts and friends (`.env.local`)
+
+Sign-in, backup and friends need the app to know your Supabase project. Without that, the Friends tab and Settings → Account explain that accounts aren't available, and everything else works offline.
+
+1. **Get your two values from Supabase.** In the [Supabase dashboard](https://supabase.com/dashboard), open your project, then **Project Settings → API**, or click **Connect** at the top. Copy:
+   - the **Project URL**, like `https://abcdefghijklmnop.supabase.co`;
+   - the **publishable key**, starting with `sb_publishable_` (older projects call it the **anon public** key). Never use the *secret* / *service_role* key.
+2. **Create the file.** In Terminal, go to the project folder (the one containing `package.json`) and copy the template:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. **Fill it in.** Open it in a text editor:
+
+   ```bash
+   open -e .env.local
+   ```
+
+   (or `code .env.local` in VS Code). Paste your values after the `=` signs, with no quotes or spaces, then save:
+
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+   EXPO_PUBLIC_SUPABASE_KEY=sb_publishable_xxxxxxxxxxxx
+   ```
+
+   In Finder, files starting with a dot are hidden; press **Cmd+Shift+.** to show them.
+4. **Restart the dev server** (stop it with Ctrl+C) with a cleared cache, so the app picks up the new values:
+
+   ```bash
+   npx expo start --clear
+   ```
+
+5. **Check it worked:** Settings → Account shows **Sign in**, and the Friends tab and Today's Friends card offer to sign in.
+6. **Set up the database and email codes:** follow [docs/backend-setup.md](docs/backend-setup.md) from step 2. That covers running the SQL files, the email templates, and an email sender.
+
+`.env.local` is ignored by git, so each teammate creates their own. For EAS builds, add the same two values as EAS environment variables; see [docs/android.md](docs/android.md).
+
 ### Running on your iPhone without Expo Go (Mac + free Apple ID)
 
 1. Install Xcode from the Mac App Store and open it once to accept the license.
