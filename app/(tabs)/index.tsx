@@ -4,19 +4,25 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CUP_OZ } from '../../src/config';
+import { buddyState } from '../../src/domain/buddy';
 import { bestStreak, countsByDay, currentStreak, lastNDays } from '../../src/domain/streaks';
 import { dateKey, parseDateKey } from '../../src/domain/time';
 import { useLog } from '../../src/state/logStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { Card, SectionTitle } from '../../src/ui/components';
+import { supportsReminders } from '../../src/platform';
+import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { ProgressRing } from '../../src/ui/ProgressRing';
+import { WaterBuddy } from '../../src/ui/WaterBuddy';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 import { useNow } from '../../src/ui/useNow';
 
 const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function TodayScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const insets = useSafeAreaInsets();
   const now = useNow(60_000);
   const goal = useSettings((s) => s.dailyGoal);
@@ -53,14 +59,15 @@ export default function TodayScreen() {
       <Text style={type.title}>Today</Text>
 
       <View style={styles.ringWrap}>
-        <ProgressRing progress={stats.today / goal}>
-          <Text style={styles.count} accessibilityLabel={`${stats.today} of ${goal} cups today`}>
-            {stats.today}
-          </Text>
-          <Text style={type.caption}>of {goal} cups</Text>
-          <Text style={[type.caption, { marginTop: 2 }]}>{stats.today * CUP_OZ} oz</Text>
+        <ProgressRing progress={stats.today / goal} size={240}>
+          <WaterBuddy cups={stats.today} goal={goal} size={160} />
         </ProgressRing>
-        {met ? <Text style={styles.metText}>Goal reached. Nice work! 🎉</Text> : null}
+        <Text style={styles.count} accessibilityLabel={`${stats.today} of ${goal} cups today`}>
+          {stats.today} <Text style={styles.countOf}>of {goal} cups</Text>
+        </Text>
+        <Text style={[type.caption, styles.caption, met && styles.metText]}>
+          {stats.today * CUP_OZ} oz · {buddyState(stats.today, goal).caption}
+        </Text>
       </View>
 
       <Pressable
@@ -78,10 +85,14 @@ export default function TodayScreen() {
       ) : null}
 
       <SectionTitle>Reminders</SectionTitle>
-      <Card style={{ gap: spacing.md }}>
-        <ReminderStatus />
-        <PauseControls />
-      </Card>
+      {supportsReminders ? (
+        <Card style={{ gap: spacing.md }}>
+          <ReminderStatus />
+          <PauseControls />
+        </Card>
+      ) : (
+        <GetTheAppCard />
+      )}
 
       <SectionTitle>Streak</SectionTitle>
       <Card style={styles.streakRow}>
@@ -113,7 +124,7 @@ export default function TodayScreen() {
                   <View
                     style={[
                       styles.barFill,
-                      { height: `${Math.max(fill * 100, d.count > 0 ? 6 : 0)}%`, backgroundColor: d.met ? colors.success : colors.primary },
+                      { height: `${Math.max(fill * 100, d.count > 0 ? 6 : 0)}%`, backgroundColor: d.met ? colors.success : colors.water },
                     ]}
                   />
                 </View>
@@ -129,19 +140,22 @@ export default function TodayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+  content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
   ringWrap: { alignItems: 'center', marginVertical: spacing.xl },
-  count: { fontSize: 56, fontWeight: '800', color: colors.text, lineHeight: 62 },
-  metText: { marginTop: spacing.md, color: colors.success, fontWeight: '600', fontSize: 16 },
+  count: { fontSize: 34, fontWeight: '800', color: colors.water, marginTop: spacing.md },
+  countOf: { fontSize: 18, fontWeight: '600', color: colors.muted },
+  caption: { marginTop: spacing.xs, fontSize: 15, textAlign: 'center' },
+  metText: { color: colors.success, fontWeight: '600' },
   logButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.lg,
     paddingVertical: spacing.lg + 2,
     alignItems: 'center',
   },
-  logButtonText: { color: colors.white, fontSize: 20, fontWeight: '700' },
-  undo: { textAlign: 'center', color: colors.primary, marginTop: spacing.md, fontSize: 15, padding: spacing.xs },
+  logButtonText: { color: colors.onPrimary, fontSize: 20, fontWeight: '700' },
+  undo: { textAlign: 'center', color: colors.primaryText, marginTop: spacing.md, fontSize: 15, padding: spacing.xs },
   streakRow: { flexDirection: 'row', alignItems: 'center' },
   streakItem: { flex: 1, alignItems: 'center' },
   streakValue: { fontSize: 26, fontWeight: '700', color: colors.text },
@@ -152,9 +166,9 @@ const styles = StyleSheet.create({
     width: 18,
     height: 80,
     borderRadius: 9,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.waterSoft,
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   barFill: { width: '100%', borderRadius: 9 },
-});
+}));

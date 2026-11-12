@@ -19,11 +19,14 @@ export function formatFriendCode(code: string): string {
   return c.length === FRIEND_CODE_LENGTH ? `${c.slice(0, 4)}-${c.slice(4)}` : c;
 }
 
-/** Text for the Share sheet. */
-export function friendShareMessage(code: string): string {
-  return (
-    `Add me on Flow State and let's stay hydrated together! 💧\n` +
-    `My friend code: ${formatFriendCode(code)}\n` +
-    `${INVITE_LINK_PREFIX}${normalizeFriendCode(code)}`
-  );
+/**
+ * Text for the Share sheet. With the website's address, the invite also has a
+ * web link that works for anyone; the app link opens the installed app.
+ */
+export function friendShareMessage(code: string, webUrl: string | null = null): string {
+  const c = normalizeFriendCode(code);
+  const lines = [`Add me on Flow State and let's stay hydrated together! 💧`, `My friend code: ${formatFriendCode(code)}`];
+  if (webUrl) lines.push(`${webUrl.replace(/\/+$/, '')}/add-friend/${c}`);
+  lines.push(`${INVITE_LINK_PREFIX}${c}`);
+  return lines.join('\n');
 }

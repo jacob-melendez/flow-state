@@ -1,6 +1,6 @@
 # Flow State Privacy Policy
 
-> **DRAFT for review.** Written by the development team to match how the app actually works (version 2.0.0). It is not legal advice. Before publishing:
+> **DRAFT for review.** Written by the development team to match how the app actually works (version 3.0.0). It is not legal advice. Before publishing:
 > - fill in the bracketed placeholders;
 > - have it reviewed (e.g. by your faculty advisor and, if the app will carry Stanford's name, the appropriate Stanford office);
 > - host it at a public URL. The App Store requires one. Then set `PRIVACY_POLICY_URL` in `src/config.ts` so it appears in the app.
@@ -25,6 +25,8 @@ These are stored only on your device and are never sent to us:
 
 Notifications are scheduled by your phone itself; no server sends them. Deleting the app deletes this information.
 
+**On the Flow State website**, the same information (except reminder settings, since the website has no reminders) is kept in your browser's local storage on that computer. Clearing your browser data, or using a private window, removes it. Your appearance choice (light/dark) is stored the same way.
+
 ## 2. If you create an account (optional)
 
 You can sign in with your Stanford (`@stanford.edu`) email address to back up your progress and use friends. We then store:
@@ -47,9 +49,9 @@ To measure whether Flow State helps students drink more water, the app sends us,
 - the number of cups;
 - your goal and whether you met it;
 - the app version;
-- your phone type (iOS/Android).
+- your platform (iOS, Android or web).
 
-These summaries carry a **random ID created on your phone** and are sent **without your account login**, so they are not linked to your name, email or account. We use them only in aggregate (for example, "average cups per day this week") for SENSA Impact Labs' reports.
+These summaries carry a **random ID created on your device** (or in your browser, on the website) and are sent **without your account login**, so they are not linked to your name, email or account. We use them only in aggregate (for example, "average cups per day this week") for SENSA Impact Labs' reports.
 
 You can turn this off any time in **Settings → Privacy → Share anonymous usage stats**. Because these summaries aren't linked to you, we can't find or delete the ones already sent.
 
@@ -67,6 +69,7 @@ We don't use it for advertising, we don't sell or rent it, and we don't share it
 - **Supabase** hosts our database and sign-in system and stores account data on our behalf. [Region: e.g. United States]
 - **[Email provider, e.g. Resend]** delivers sign-in code emails, so it receives your email address and the code.
 - **Apple / Google** deliver the app and may provide crash reports to us if you've allowed that in your phone settings.
+- **[Website host, e.g. Expo (EAS Hosting)]** serves the Flow State website. Like any web host, it may keep standard server logs (such as IP addresses) for security and reliability.
 
 These providers process data only to provide their services to us.
 
@@ -115,7 +118,7 @@ SENSA Impact Labs, Health & Wellness team
 
 ## Appendix (for the team): App Store "App Privacy" answers
 
-App Store Connect asks what data the app collects. Based on version 2.0.0 (data that stays on the phone isn't "collected" in Apple's terms):
+App Store Connect asks what data the app collects. Based on version 3.0.0 (data that stays on the phone isn't "collected" in Apple's terms):
 
 | Apple data type | Collected? | Linked to the user? | Used for tracking? | Purpose |
 | --- | --- | --- | --- | --- |
@@ -129,3 +132,23 @@ App Store Connect asks what data the app collects. Based on version 2.0.0 (data 
 | Other User Content (friends list) | Yes (only with an account) | Yes | No | App Functionality |
 
 Everything else (location, contacts, photos, browsing, purchases, financial info, diagnostics from us) is **not collected**. Also confirm in App Store Connect that the app supports **account deletion in-app** (it does: Settings → Account → Delete account).
+
+## Appendix (for the team): Google Play "Data safety" answers
+
+Play Console asks similar questions. Based on version 3.0.0:
+
+- **Does the app collect or share any of the required user data types?** Yes (collects; does **not** share with third parties; service providers acting for you don't count as sharing).
+- **Is all collected data encrypted in transit?** Yes (HTTPS).
+- **Can users request that their data be deleted?** Yes: in-app (Settings → Account → Delete account). Also add a web link or email for deletion requests, which Play requires.
+
+| Play data type | Collected | Optional? | Purpose |
+| --- | --- | --- | --- |
+| Personal info → Email address | Yes (only with an account) | Optional | App functionality, Account management |
+| Personal info → Name (display name) | Yes (only with an account) | Optional | App functionality |
+| Personal info → User IDs (account ID) | Yes (only with an account) | Optional | App functionality, Account management |
+| Health and fitness → Health info (water log, goals) | Yes (with an account; anonymous daily totals if stats on) | Optional | App functionality, Analytics |
+| App activity → Other user-generated content (friends) | Yes (only with an account) | Optional | App functionality |
+| App activity → App interactions (days used, app version) | Yes (if stats on) | Optional | Analytics |
+| Device or other IDs (random install ID for stats) | Yes (if stats on) | Optional | Analytics |
+
+Not collected: location, contacts, photos/videos, audio, files, calendar, messages, financial info, web browsing, and crash logs or diagnostics (unless you add a crash reporter later). Data that stays only on the device (reminder settings, calculator answers, the log when signed out) isn't "collected" in Google's terms either.

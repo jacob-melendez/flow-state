@@ -13,6 +13,9 @@ export const APP_FULL_NAME = 'Stanford Flow State';
 
 export const ORG_NAME = 'SENSA Impact Labs · Health & Wellness';
 
+/** SENSA's website, shown in Settings → About when set. */
+export const SENSA_URL: string | null = null;
+
 export const INTERVAL_OPTIONS = [15, 30, 60] as const;
 export type IntervalMinutes = (typeof INTERVAL_OPTIONS)[number];
 
@@ -70,3 +73,14 @@ export const IMPACT_LOOKBACK_DAYS = 7;
  * The App Store requires one; host it (e.g. GitHub Pages or a Google Doc) and paste the link here.
  */
 export const PRIVACY_POLICY_URL: string | null = null;
+
+/** Store links shown on the website's "Get the app" card once the apps are published. */
+export const APP_STORE_URL: string | null = null;
+export const PLAY_STORE_URL: string | null = null;
+
+/**
+ * Public URL of the Flow State website (no trailing slash), e.g.
+ * "https://flowstate.example.org". When set, friend invites include a web link
+ * (https://…/add-friend/CODE) that works for anyone, with or without the app.
+ */
+export const WEB_URL: string | null = null;

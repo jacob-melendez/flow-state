@@ -4,12 +4,15 @@ import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAccount } from '../../src/cloud/account';
+import { isWeb } from '../../src/platform';
 import { FriendRow, removeFriend, respondToRequest, useFriends } from '../../src/cloud/friends';
 import { Banner, Button, Card, SectionTitle } from '../../src/ui/components';
 import { ProgressRing } from '../../src/ui/ProgressRing';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 export default function FriendsScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const insets = useSafeAreaInsets();
   const { status, displayName } = useAccount();
   const { friends, incoming, outgoing, loaded, loading, error, refresh } = useFriends();
@@ -123,7 +126,7 @@ export default function FriendsScreen() {
 
         {friends.length > 0 ? (
           <Text style={[type.caption, { marginTop: spacing.md, textAlign: 'center' }]}>
-            Friends see your name, today’s cups and your streak. Pull down to refresh.
+            Friends see your name, today’s cups and your streak.{isWeb ? '' : ' Pull down to refresh.'}
           </Text>
         ) : null}
       </>
@@ -135,7 +138,7 @@ export default function FriendsScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
       refreshControl={
-        status === 'signed-in' ? <RefreshControl refreshing={loading && loaded} onRefresh={refresh} /> : undefined
+        status === 'signed-in' ? <RefreshControl refreshing={loading && loaded} onRefresh={refresh} tintColor={colors.muted} colors={[colors.primary]} /> : undefined
       }
     >
       {header}
@@ -145,6 +148,8 @@ export default function FriendsScreen() {
 }
 
 function IncomingRequest({ row }: { row: FriendRow }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   const [busy, setBusy] = useState(false);
   const answer = async (accept: boolean) => {
     setBusy(true);
@@ -175,6 +180,8 @@ function IncomingRequest({ row }: { row: FriendRow }) {
 }
 
 function FriendItem({ row, last }: { row: FriendRow; last: boolean }) {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const name = row.display_name ?? 'Friend';
   const cups = row.today_cups ?? 0;
   const goal = row.today_goal ?? 8;
@@ -228,19 +235,20 @@ function FriendItem({ row, last }: { row: FriendRow; last: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+  content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  addLink: { color: colors.primary, fontSize: 17, fontWeight: '700', padding: spacing.xs },
+  addLink: { color: colors.primaryText, fontSize: 17, fontWeight: '700', padding: spacing.xs },
   bigEmoji: { fontSize: 40 },
   muted: { ...type.body, color: colors.muted, lineHeight: 22 },
   requestButtons: { flexDirection: 'row', gap: spacing.sm },
   blockLink: { color: colors.muted, fontSize: 14, alignSelf: 'flex-start', paddingVertical: spacing.xs },
   pendingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 36 },
-  cancel: { color: colors.primary, fontWeight: '600', fontSize: 15, padding: spacing.xs },
+  cancel: { color: colors.primaryText, fontWeight: '600', fontSize: 15, padding: spacing.xs },
   friendRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
   friendDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   ringText: { fontSize: 15, fontWeight: '700', color: colors.text },
   streak: { fontSize: 15, fontWeight: '700', color: colors.text },
   more: { fontSize: 22, color: colors.muted, paddingHorizontal: spacing.xs, borderRadius: radius.sm },
-});
+}));

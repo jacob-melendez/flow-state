@@ -1,10 +1,12 @@
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, type } from './theme';
+import { makeStyles, spacing, useTheme } from './theme';
 
 /** Title bar for screens presented as modals, with a text button on the right. */
 export function ModalHeader({ title, action, onAction }: { title: string; action: string; onAction: () => void }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? spacing.lg : insets.top + spacing.md }]}>
@@ -16,7 +18,8 @@ export function ModalHeader({ title, action, onAction }: { title: string; action
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -27,5 +30,5 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.card,
   },
-  action: { color: colors.primary, fontSize: 17, fontWeight: '600', padding: spacing.xs },
-});
+  action: { color: colors.primaryText, fontSize: 17, fontWeight: '600', padding: spacing.xs },
+}));

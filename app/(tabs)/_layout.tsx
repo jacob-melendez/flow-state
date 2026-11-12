@@ -4,9 +4,10 @@ import { Tabs } from 'expo-router/js-tabs';
 
 import { cloudEnabled } from '../../src/cloud/client';
 import { useSettings } from '../../src/state/settingsStore';
-import { colors } from '../../src/ui/theme';
+import { useTheme } from '../../src/ui/theme';
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   const onboarded = useSettings((s) => s.onboarded);
   if (!onboarded) return <Redirect href="/onboarding" />;
 
@@ -14,8 +15,9 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.primaryText,
         tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: { backgroundColor: colors.chrome, borderTopColor: colors.border },
         sceneStyle: { backgroundColor: colors.background },
       }}
     >

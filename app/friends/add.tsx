@@ -1,18 +1,21 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Share, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { useAccount } from '../../src/cloud/account';
+import { WEB_URL } from '../../src/config';
 import { completeStanfordEmail, isStanfordEmail } from '../../src/cloud/email';
 import { formatFriendCode, friendShareMessage, isValidFriendCode } from '../../src/cloud/friendCode';
 import { sendFriendRequest } from '../../src/cloud/friends';
 import { Banner, Button, Card, SectionTitle } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 type Result = { ok: boolean; message: string } | null;
 
 export default function AddFriendScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const params = useLocalSearchParams<{ code?: string }>();
   const { status, friendCode } = useAccount();
   const [code, setCode] = useState(params.code ? formatFriendCode(params.code) : '');
@@ -20,6 +23,7 @@ export default function AddFriendScreen() {
   const [codeResult, setCodeResult] = useState<Result>(null);
   const [emailResult, setEmailResult] = useState<Result>(null);
   const [busy, setBusy] = useState<'code' | 'email' | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/friends'));
 
@@ -59,12 +63,25 @@ export default function AddFriendScreen() {
     setBusy(null);
   };
 
-  const share = () => {
-    if (friendCode) Share.share({ message: friendShareMessage(friendCode) }).catch(() => {});
+  const share = async () => {
+    if (!friendCode) return;
+    const message = friendShareMessage(friendCode, WEB_URL);
+    // Browsers without a share sheet (most desktops) copy the invite instead.
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && !navigator.share) {
+      try {
+        await navigator.clipboard.writeText(message);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch {
+        // Clipboard blocked: the code is shown on screen and selectable.
+      }
+      return;
+    }
+    Share.share({ message }).catch(() => {});
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ModalHeader title="Add friends" action="Done" onAction={close} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Card style={{ alignItems: 'center', gap: spacing.sm }}>
@@ -72,7 +89,12 @@ export default function AddFriendScreen() {
           <Text style={styles.myCode} selectable accessibilityLabel={`Your friend code: ${friendCode ? formatFriendCode(friendCode).split('').join(' ') : 'loading'}`}>
             {friendCode ? formatFriendCode(friendCode) : '…'}
           </Text>
-          <Button label="Share invite" onPress={share} disabled={!friendCode} style={{ alignSelf: 'stretch' }} />
+          <Button
+            label={copied ? 'Invite copied!' : 'Share invite'}
+            onPress={share}
+            disabled={!friendCode}
+            style={{ alignSelf: 'stretch' }}
+          />
           {!friendCode ? (
             <Text style={[type.caption, { textAlign: 'center' }]}>
               Friend codes aren’t available yet. Ask your app’s admin to finish the friends setup.
@@ -138,10 +160,11 @@ export default function AddFriendScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.sm },
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+  content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.sm },
   muted: { ...type.body, color: colors.muted, lineHeight: 22 },
-  myCode: { fontSize: 34, fontWeight: '800', letterSpacing: 3, color: colors.primaryDark },
+  myCode: { fontSize: 34, fontWeight: '800', letterSpacing: 3, color: colors.primaryText },
   input: {
     fontSize: 18,
     color: colors.text,
@@ -151,4 +174,4 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   codeInput: { fontSize: 22, fontWeight: '700', letterSpacing: 2, textAlign: 'center' },
-});
+}));

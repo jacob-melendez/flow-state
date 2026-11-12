@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { colors } from './theme';
+import { useTheme } from './theme';
 
 export function ProgressRing({
   progress,
@@ -16,6 +16,7 @@ export function ProgressRing({
   stroke?: number;
   children?: ReactNode;
 }) {
+  const { colors } = useTheme();
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(1, progress));
@@ -24,12 +25,12 @@ export function ProgressRing({
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={{ position: 'absolute' }}>
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.primarySoft} strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.waterSoft} strokeWidth={stroke} fill="none" />
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke={done ? colors.success : colors.primary}
+          stroke={done ? colors.success : colors.water}
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"

@@ -1,22 +1,32 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Switch, Text } from 'react-native';
+import { Alert, Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { APP_FULL_NAME, ORG_NAME, PRIVACY_POLICY_URL } from '../../src/config';
+import { APP_FULL_NAME, ORG_NAME, PRIVACY_POLICY_URL, SENSA_URL } from '../../src/config';
 import { sendTestReminder } from '../../src/notifications/adapter';
 import { usePermission } from '../../src/state/permissionStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { cloudEnabled } from '../../src/cloud/client';
+import { supportsReminders } from '../../src/platform';
 import { AccountCard } from '../../src/ui/AccountCard';
-import { Button, Card, Row, SectionTitle } from '../../src/ui/components';
+import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
+import { STANFORD_LOGO } from '../../src/ui/brandAssets';
+import { SensaLogo } from '../../src/ui/SensaLogo';
+import { Button, Card, Row, SectionTitle, Segmented, Toggle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
 import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
-import { colors, spacing, type } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, spacing, useTheme } from '../../src/ui/theme';
+import type { AppearancePreference } from '../../src/ui/theme';
+
+const APPEARANCE_OPTIONS = ['system', 'light', 'dark'] as const;
+const APPEARANCE_LABELS: Record<AppearancePreference, string> = { system: 'System', light: 'Light', dark: 'Dark' };
 
 export default function SettingsScreen() {
+  const styles = useStyles();
+  const { colors, type, scheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { enabled, setEnabled, shareImpactStats, setShareImpactStats } = useSettings();
+  const { enabled, setEnabled, shareImpactStats, setShareImpactStats, appearance, setAppearance } = useSettings();
   const permission = usePermission((s) => s.permission);
   const [testSent, setTestSent] = useState(false);
 
@@ -44,49 +54,72 @@ export default function SettingsScreen() {
         </>
       ) : null}
 
-      <SectionTitle>Reminders</SectionTitle>
-      <Card style={{ gap: spacing.md }}>
-        <Row label="Water reminders">
-          <Switch value={enabled} onValueChange={setEnabled} trackColor={{ true: colors.primary }} />
-        </Row>
-        <ReminderStatus />
+      <SectionTitle>Appearance</SectionTitle>
+      <Card>
+        <Segmented
+          options={APPEARANCE_OPTIONS}
+          value={appearance}
+          onChange={setAppearance}
+          format={(o) => APPEARANCE_LABELS[o]}
+        />
       </Card>
 
-      {enabled ? (
+      {supportsReminders ? (
         <>
-          <SectionTitle>Remind me every</SectionTitle>
-          <Card>
-            <IntervalField />
-          </Card>
+        <SectionTitle>Reminders</SectionTitle>
+        <Card style={{ gap: spacing.md }}>
+          <Row label="Water reminders">
+            <Toggle value={enabled} onValueChange={setEnabled} />
+          </Row>
+          <ReminderStatus />
+        </Card>
 
-          <SectionTitle>Active hours</SectionTitle>
-          <Card>
-            <ActiveHoursFields />
-          </Card>
+        {enabled ? (
+          <>
+            <SectionTitle>Remind me every</SectionTitle>
+            <Card>
+              <IntervalField />
+            </Card>
 
-          <SectionTitle>Pause</SectionTitle>
-          <Card>
-            <PauseControls />
-          </Card>
+            <SectionTitle>Active hours</SectionTitle>
+            <Card>
+              <ActiveHoursFields />
+            </Card>
+
+            <SectionTitle>Pause</SectionTitle>
+            <Card>
+              <PauseControls />
+            </Card>
+          </>
+        ) : null}
         </>
-      ) : null}
+      ) : (
+        <>
+          <SectionTitle>Reminders</SectionTitle>
+          <GetTheAppCard />
+        </>
+      )}
 
       <SectionTitle>Goal</SectionTitle>
       <Card>
         <GoalField />
       </Card>
 
-      <SectionTitle>Try it</SectionTitle>
-      <Card style={{ gap: spacing.sm }}>
-        <Button
-          variant="secondary"
-          label={testSent ? 'Sent! Arriving in ~10 seconds…' : 'Send a test reminder'}
-          onPress={onTest}
-          disabled={testSent}
-          accessibilityHint="Schedules a sample reminder 10 seconds from now"
-        />
-        <Text style={type.caption}>Lock your phone after tapping to see how reminders look.</Text>
-      </Card>
+      {supportsReminders ? (
+        <>
+        <SectionTitle>Try it</SectionTitle>
+        <Card style={{ gap: spacing.sm }}>
+          <Button
+            variant="secondary"
+            label={testSent ? 'Sent! Arriving in ~10 seconds…' : 'Send a test reminder'}
+            onPress={onTest}
+            disabled={testSent}
+            accessibilityHint="Schedules a sample reminder 10 seconds from now"
+          />
+          <Text style={type.caption}>Lock your phone after tapping to see how reminders look.</Text>
+        </Card>
+        </>
+      ) : null}
 
       {cloudEnabled || PRIVACY_POLICY_URL ? (
         <>
@@ -95,17 +128,16 @@ export default function SettingsScreen() {
             {cloudEnabled ? (
               <>
                 <Row label="Share anonymous usage stats">
-                  <Switch
+                  <Toggle
                     accessibilityLabel="Share anonymous usage stats"
                     value={shareImpactStats}
                     onValueChange={setShareImpactStats}
-                    trackColor={{ true: colors.primary }}
                   />
                 </Row>
                 <Text style={[type.caption, { lineHeight: 19 }]}>
-                  Helps SENSA Impact Labs measure whether Flow State works. Once a day, the app sends each past day’s cup
-                  count and whether you met your goal, with a random ID that isn’t linked to your name, email or account.
-                  Nothing is sent while this is off.
+                  Helps SENSA Impact Labs measure whether Flow State works. Once a day, the app sends each past day’s
+                  cup count and whether you met your goal, with a random ID that isn’t linked to your name, email or
+                  account. Nothing is sent while this is off.
                 </Text>
               </>
             ) : null}
@@ -120,8 +152,14 @@ export default function SettingsScreen() {
 
       <SectionTitle>About</SectionTitle>
       <Card style={{ gap: spacing.xs }}>
-        <Text style={type.heading}>{APP_FULL_NAME}</Text>
-        <Text style={[type.caption, { color: colors.cardinal }]}>{ORG_NAME}</Text>
+        <View style={styles.aboutHeader}>
+          <SensaLogo width={56} />
+          <View style={{ flex: 1 }}>
+            <Text style={type.heading}>{APP_FULL_NAME}</Text>
+            <Text style={[type.caption, { color: colors.primaryText }]}>{ORG_NAME}</Text>
+            <Text style={type.caption}>A project of SENSA, a Stanford student organization</Text>
+          </View>
+        </View>
         <Text style={[type.body, { marginTop: spacing.sm, lineHeight: 22 }]}>
           Built to make water awareness and access part of everyday student life.
         </Text>
@@ -131,12 +169,30 @@ export default function SettingsScreen() {
             : 'Your settings and water log are stored only on this device. Nothing is sent anywhere.'}
         </Text>
         <Text style={type.caption}>Version {Constants.expoConfig?.version ?? '–'}</Text>
+        {SENSA_URL ? (
+          <Text accessibilityRole="link" onPress={() => Linking.openURL(SENSA_URL!)} style={styles.link}>
+            About SENSA
+          </Text>
+        ) : null}
+        {STANFORD_LOGO ? (
+          // Shown separately from SENSA's logo, never combined with it (Stanford identity rules).
+          <Image
+            source={scheme === 'dark' ? STANFORD_LOGO.dark : STANFORD_LOGO.light}
+            style={styles.stanfordLogo}
+            resizeMode="contain"
+            accessibilityLabel="Stanford University"
+          />
+        ) : null}
       </Card>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  link: { color: colors.primary, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
-});
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+    content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
+    aboutHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    stanfordLogo: { width: 64, height: 64, marginTop: spacing.lg, alignSelf: 'flex-start' },
+    link: { color: colors.primaryText, fontWeight: '600', fontSize: 15, paddingVertical: spacing.xs },
+  }),
+);

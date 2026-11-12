@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { sendCode } from '../../src/cloud/account';
 import { completeStanfordEmail, isStanfordEmail } from '../../src/cloud/email';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 export default function SignInScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -30,7 +32,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ModalHeader title="Sign in" action="Cancel" onAction={() => router.dismissAll()} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.emoji}>☁️</Text>
@@ -76,8 +78,9 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+  content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   input: {
@@ -88,4 +91,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
-});
+}));

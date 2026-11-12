@@ -3,15 +3,11 @@
     "name": "Flow State",
     "slug": "flow-state",
     "scheme": "flowstate",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F3F7FB"
-    },
+    "userInterfaceStyle": "automatic",
+    "primaryColor": "#8C1515",
     "ios": {
       "bundleIdentifier": "org.sensaimpactlabs.flowstate",
       "supportsTablet": false,
@@ -22,15 +18,27 @@
     "android": {
       "package": "org.sensaimpactlabs.flowstate",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#8C1515",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "name": "Flow State",
+      "shortName": "Flow State",
+      "description": "Track your water, hit your daily goal, and stay hydrated with friends. A SENSA project at Stanford.",
+      "lang": "en",
+      "themeColor": "#8C1515",
+      "backgroundColor": "#F7F5F2"
     },
     "plugins": [
       "expo-router",
@@ -39,10 +47,24 @@
       [
         "expo-notifications",
         {
-          "enableRemoteNotifications": false
+          "enableRemoteNotifications": false,
+          "icon": "./assets/notification-icon.png",
+          "color": "#8C1515"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F5F2",
+          "dark": {
+            "backgroundColor": "#141312"
+          }
+        }
+      ]
     ]
   }
 }

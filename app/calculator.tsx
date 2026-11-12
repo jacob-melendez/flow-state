@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -18,8 +18,8 @@ import {
   pregnancyApplies,
 } from '../src/domain/waterCalculator';
 import { useSettings } from '../src/state/settingsStore';
-import { Banner, Button, Card, Row, SectionTitle, Segmented, Stepper } from '../src/ui/components';
-import { colors, radius, spacing, type } from '../src/ui/theme';
+import { Banner, Button, Card, Row, SectionTitle, Segmented, Stepper, Toggle } from '../src/ui/components';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../src/ui/theme';
 
 const SEX_OPTIONS: readonly Sex[] = ['female', 'male', 'unspecified'];
 const SEX_LABELS: Record<Sex, string> = { female: 'Female', male: 'Male', unspecified: 'Prefer not to say' };
@@ -28,6 +28,8 @@ const PREGNANCY_LABELS: Record<Pregnancy, string> = { none: 'Neither', pregnant:
 const UNIT_OPTIONS: readonly WeightUnit[] = ['lb', 'kg'];
 
 export default function CalculatorScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const insets = useSafeAreaInsets();
   const { dailyGoal, setDailyGoal, calculatorProfile, setCalculatorProfile } = useSettings();
 
@@ -62,7 +64,7 @@ export default function CalculatorScreen() {
   const isCurrentGoal = estimate?.cups === dailyGoal;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? spacing.lg : insets.top + spacing.md }]}>
         <Text style={type.heading}>Water calculator</Text>
         <Text accessibilityRole="button" onPress={() => router.back()} style={styles.done}>
@@ -125,11 +127,10 @@ export default function CalculatorScreen() {
             />
           </Row>
           <Row label="Hot weather" hint="Hot day or lots of time outside">
-            <Switch
+            <Toggle
               accessibilityLabel="Hot weather"
               value={input.hotWeather}
               onValueChange={(hotWeather) => update({ hotWeather })}
-              trackColor={{ true: colors.primary }}
             />
           </Row>
           {pregnancyApplies(input.sex) ? (
@@ -198,7 +199,8 @@ export default function CalculatorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,8 +211,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.card,
   },
-  done: { color: colors.primary, fontSize: 17, fontWeight: '600', padding: spacing.xs },
-  content: { padding: spacing.lg },
+  done: { color: colors.primaryText, fontSize: 17, fontWeight: '600', padding: spacing.xs },
+  content: { ...READABLE_WIDTH, padding: spacing.lg },
   weightRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   weightInput: {
     width: '100%',
@@ -223,8 +225,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   result: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  resultCups: { fontSize: 56, fontWeight: '800', color: colors.primary, lineHeight: 62 },
+  resultCups: { fontSize: 56, fontWeight: '800', color: colors.water, lineHeight: 62 },
   breakdown: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   breakdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
   disclaimer: { marginTop: spacing.lg, lineHeight: 19 },
-});
+}));

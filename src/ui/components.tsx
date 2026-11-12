@@ -1,13 +1,15 @@
 import { ReactNode } from 'react';
-import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, Switch, Text, View, ViewStyle } from 'react-native';
 
-import { colors, radius, spacing, type } from './theme';
+import { makeStyles, radius, spacing, useTheme } from './theme';
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles();
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
+  const styles = useStyles();
   return <Text style={styles.sectionTitle}>{children}</Text>;
 }
 
@@ -28,6 +30,8 @@ export function Button({
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -44,7 +48,7 @@ export function Button({
         style,
       ]}
     >
-      <Text style={[styles.buttonLabel, variant === 'primary' ? { color: colors.white } : { color: colors.primary }]}>
+      <Text style={[styles.buttonLabel, variant === 'primary' ? { color: colors.onPrimary } : { color: colors.primaryText }]}>
         {label}
       </Text>
     </Pressable>
@@ -62,6 +66,7 @@ export function Segmented<T extends string | number>({
   onChange: (v: T) => void;
   format?: (v: T) => string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.segmented} accessibilityRole="radiogroup">
       {options.map((opt) => {
@@ -99,6 +104,7 @@ export function Stepper({
   label: string;
   step?: number;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.stepper}>
       <Pressable
@@ -126,9 +132,36 @@ export function Stepper({
   );
 }
 
+/** On/off switch in the app's colors (Cardinal when on). */
+export function Toggle({
+  value,
+  onValueChange,
+  accessibilityLabel,
+}: {
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+  accessibilityLabel?: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Switch
+      accessibilityLabel={accessibilityLabel}
+      value={value}
+      onValueChange={onValueChange}
+      trackColor={{ true: colors.primary, false: colors.border }}
+      thumbColor="#FFFFFF"
+      ios_backgroundColor={colors.border}
+      // react-native-web uses a separate color for the "on" thumb (teal by default).
+      {...({ activeThumbColor: '#FFFFFF' } as object)}
+    />
+  );
+}
+
 export function Banner({ tone, children }: { tone: 'info' | 'warning' | 'success'; children: ReactNode }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const bg = tone === 'warning' ? colors.warningSoft : tone === 'success' ? colors.successSoft : colors.primarySoft;
-  const fg = tone === 'warning' ? colors.warning : tone === 'success' ? colors.success : colors.primaryDark;
+  const fg = tone === 'warning' ? colors.warning : tone === 'success' ? colors.success : colors.onPrimarySoft;
   return (
     <View style={[styles.banner, { backgroundColor: bg }]}>
       <Text style={{ color: fg, fontSize: 14, lineHeight: 20 }}>{children}</Text>
@@ -137,6 +170,8 @@ export function Banner({ tone, children }: { tone: 'info' | 'warning' | 'success
 }
 
 export function Row({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   return (
     <View style={styles.row}>
       <View style={{ flex: 1, paddingRight: spacing.md }}>
@@ -148,7 +183,8 @@ export function Row({ label, children, hint }: { label: string; children: ReactN
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
@@ -183,8 +219,8 @@ const styles = StyleSheet.create({
     padding: 3,
   },
   segment: { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm + 2 },
-  segmentSelected: { backgroundColor: colors.white, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
-  segmentLabel: { fontSize: 15, color: colors.primaryDark, fontWeight: '500', textAlign: 'center' },
+  segmentSelected: { backgroundColor: colors.segmentSelected, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segmentLabel: { fontSize: 15, color: colors.onPrimarySoft, fontWeight: '500', textAlign: 'center' },
   segmentLabelSelected: { fontWeight: '700' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   stepperButton: {
@@ -195,8 +231,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepperButtonText: { fontSize: 22, color: colors.primaryDark, fontWeight: '600', marginTop: -2 },
+  stepperButtonText: { fontSize: 22, color: colors.onPrimarySoft, fontWeight: '600', marginTop: -2 },
   stepperValue: { minWidth: 72, textAlign: 'center', fontSize: 17, fontWeight: '600', color: colors.text },
   banner: { borderRadius: radius.md, padding: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm, minHeight: 48 },
-});
+}));

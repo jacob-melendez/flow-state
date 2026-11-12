@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { updateDisplayName, useAccount } from '../../src/cloud/account';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
-import { colors, radius, spacing, type } from '../../src/ui/theme';
+import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 /** Sets the display name (shown on first sign-in, and from Settings to edit it). */
 export default function ProfileScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const current = useAccount((s) => s.displayName);
   const [name, setName] = useState(current ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ModalHeader title="Your name" action={current ? 'Cancel' : 'Skip'} onAction={() => router.dismissAll()} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.emoji}>👋</Text>
@@ -60,8 +62,9 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
+const useStyles = makeStyles((colors, type) =>
+  StyleSheet.create({
+  content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
   emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   input: {
@@ -72,4 +75,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
-});
+}));
