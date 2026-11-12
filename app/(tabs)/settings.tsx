@@ -47,12 +47,8 @@ export default function SettingsScreen() {
     >
       <Text style={type.title}>Settings</Text>
 
-      {cloudEnabled ? (
-        <>
-          <SectionTitle>Account</SectionTitle>
-          <AccountCard />
-        </>
-      ) : null}
+      <SectionTitle>Account</SectionTitle>
+      <AccountCard />
 
       <SectionTitle>Appearance</SectionTitle>
       <Card>

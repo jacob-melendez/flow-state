@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccount } from '../../src/cloud/account';
 import { isWeb } from '../../src/platform';
 import { FriendRow, removeFriend, respondToRequest, useFriends } from '../../src/cloud/friends';
+import { BackendSetupHint } from '../../src/ui/BackendSetupHint';
 import { Banner, Button, Card, SectionTitle } from '../../src/ui/components';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
@@ -40,7 +41,21 @@ export default function FriendsScreen() {
   );
 
   let body: ReactNode;
-  if (status === 'loading') {
+  if (status === 'disabled') {
+    // This build isn't connected to a backend, so there are no accounts yet.
+    body = (
+      <Card style={{ gap: spacing.md }}>
+        <Text style={styles.bigEmoji}>🤝</Text>
+        <Text style={type.heading}>Stay hydrated together</Text>
+        <Text style={styles.muted}>
+          Add friends with a friend code, an invite link or their Stanford email, then cheer each other on. Friends see
+          only your name, today’s cups and your streak.
+        </Text>
+        <Banner tone="info">Friends need a Flow State account, which isn’t available in this version yet.</Banner>
+        <BackendSetupHint />
+      </Card>
+    );
+  } else if (status === 'loading') {
     body = null;
   } else if (status !== 'signed-in') {
     body = (

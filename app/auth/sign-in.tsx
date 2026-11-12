@@ -38,8 +38,8 @@ export default function SignInScreen() {
         <Text style={styles.emoji}>☁️</Text>
         <Text style={type.title}>Back up your progress</Text>
         <Text style={styles.body}>
-          Sign in with your Stanford email to keep your water log safe and use it on more than one phone. Friends are coming
-          soon. No password needed: we’ll email you a 6-digit code.
+          Sign in with your Stanford email to keep your water log safe, use it on more than one device, and add friends.
+          No password needed: we’ll email you a 6-digit code.
         </Text>
 
         <Card style={{ gap: spacing.sm }}>

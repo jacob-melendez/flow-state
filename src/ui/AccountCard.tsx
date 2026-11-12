@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { deleteAccount, requestCloudSync, signOut, useAccount } from '../cloud/account';
 import { replaceLocalDataWith } from '../cloud/cloudSync';
+import { BackendSetupHint } from './BackendSetupHint';
 import { setDiscoverableByEmail } from '../cloud/friends';
 import { useLog } from '../state/logStore';
 import { Banner, Button, Card, Row, Toggle } from './components';
@@ -19,7 +20,7 @@ function ago(t: number, now: number): string {
   return new Date(t).toLocaleDateString();
 }
 
-/** Settings → Account. Hidden entirely when the app has no backend configured. */
+/** Settings → Account. Without a backend, explains that accounts aren't available yet. */
 export function AccountCard() {
   const styles = useStyles();
   const { colors, type } = useTheme();
@@ -28,7 +29,18 @@ export function AccountCard() {
   const { lastSyncedAt, ownerUserId, dirtyEntryIds } = useLog();
   const [deleting, setDeleting] = useState(false);
 
-  if (status === 'disabled') return null;
+  if (status === 'disabled') {
+    return (
+      <Card style={{ gap: spacing.md }}>
+        <Text style={type.heading}>Accounts are coming</Text>
+        <Text style={[type.body, { color: colors.muted, lineHeight: 22 }]}>
+          With a Stanford account you can back up your water log and add friends. Accounts aren’t available in this
+          version yet; everything works on this device in the meantime.
+        </Text>
+        <BackendSetupHint />
+      </Card>
+    );
+  }
 
   if (status === 'loading') {
     return (

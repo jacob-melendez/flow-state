@@ -11,6 +11,7 @@ import { useLog } from '../../src/state/logStore';
 import { useSettings } from '../../src/state/settingsStore';
 import { Card, SectionTitle } from '../../src/ui/components';
 import { supportsReminders } from '../../src/platform';
+import { FriendsCard } from '../../src/ui/FriendsCard';
 import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { WaterBuddy } from '../../src/ui/WaterBuddy';
@@ -93,6 +94,9 @@ export default function TodayScreen() {
       ) : (
         <GetTheAppCard />
       )}
+
+      <SectionTitle>Friends</SectionTitle>
+      <FriendsCard />
 
       <SectionTitle>Streak</SectionTitle>
       <Card style={styles.streakRow}>
