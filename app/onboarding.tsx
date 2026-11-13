@@ -26,11 +26,17 @@ export default function OnboardingScreen() {
   const completeOnboarding = useSettings((s) => s.completeOnboarding);
   const setDailyGoal = useSettings((s) => s.setDailyGoal);
   const [estimate, setEstimate] = useState<WaterEstimate | null>(null);
+  // The estimate last applied as the goal, so going Back and Continue again
+  // doesn't overwrite an adjustment made on the goal step.
+  const [appliedCups, setAppliedCups] = useState<number | null>(null);
   const requestPermission = usePermission((s) => s.request);
 
   const next = () => {
     // Leaving "About you": the calculator's estimate becomes the starting goal.
-    if (STEPS[step] === 'about' && estimate) setDailyGoal(estimate.cups);
+    if (STEPS[step] === 'about' && estimate && estimate.cups !== appliedCups) {
+      setDailyGoal(estimate.cups);
+      setAppliedCups(estimate.cups);
+    }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
   // The calculator is required: no moving on without a valid estimate.
