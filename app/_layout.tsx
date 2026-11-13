@@ -11,8 +11,9 @@ import { registerBackgroundSync } from '../src/background';
 import { requestCloudSync, startCloud } from '../src/cloud/account';
 import { reportImpactStats } from '../src/cloud/impact';
 import { configureNotifications } from '../src/notifications/adapter';
-import { useHydrated } from '../src/state/hydration';
+import { useHydrated, waitForHydration } from '../src/state/hydration';
 import { usePermission } from '../src/state/permissionStore';
+import { bindHydrationWatch } from '../src/hydrationWatch';
 import { bindStoreSync, handleNotificationResponse, syncReminders } from '../src/sync';
 import { useTheme } from '../src/ui/theme';
 import { LaunchScreen } from '../src/ui/LaunchScreen';
@@ -60,6 +61,7 @@ function AppShell() {
 
     startCloud();
     reportImpactStats();
+    waitForHydration().then(bindHydrationWatch);
 
     (async () => {
       // Reminders exist only in the phone apps (the website is a companion).
@@ -112,6 +114,7 @@ function AppStack() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen name="calculator" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="personalize" options={{ presentation: 'modal' }} />
       <Stack.Screen name="auth" options={{ presentation: 'modal' }} />
       <Stack.Screen name="friends/add" options={{ presentation: 'modal' }} />
     </Stack>

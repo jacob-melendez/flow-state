@@ -2,7 +2,7 @@
 
 SENSA Impact Labs Fall 2026, Health & Wellness Group (Stanford Flow State). This repository holds the Flow State app.
 
-Flow State reminds Stanford students to drink water every **15 minutes, 30 minutes or 1 hour** during the hours they choose. Students can log cups toward a daily goal, watch their water buddy fill up, and build streaks with friends.
+Flow State reminds Stanford students to drink water at the interval they choose (**every hour by default, anywhere from 15 minutes to 3 hours**) during their waking hours. Students can log cups toward a daily goal, watch their water buddy fill up, and build streaks with friends.
 
 It runs on **iPhone, Android and the web**. The website is a companion without reminders; see [docs/deploy-web.md](docs/deploy-web.md).
 
@@ -10,7 +10,11 @@ The app works fully offline. Students can optionally **sign in with their Stanfo
 
 ## Features
 
-- **Interval reminders**: every 15 min, 30 min or 1 hour.
+- **Interval reminders**: every hour by default. A scroll wheel (iOS) or picker (Android) sets anything from 15 minutes to 3 hours, in 15-minute steps.
+- **After the goal**: students choose whether reminders keep going once they reach their daily goal, or stop until tomorrow.
+- **Catch-up check-ins**: halfway and three-quarters through the active hours (e.g. 3 PM and 6 PM for 9 AM–9 PM), a "you're a bit behind" notification arrives only if the student is behind pace. Settings → Smart check-ins turns them off.
+- **Take-a-break warnings**: if a student logs 4+ cups within an hour, or twice their daily need (the larger of their goal and their calculator estimate), the app tells them to take a break and pauses reminders (for an hour after fast drinking, until tomorrow after a very high total). Each warning shows at most once a day. The thresholds live in `src/domain/hydrationSafety.ts` for the health team to review. This is a gentle nudge, not medical advice.
+- **Ring colors by time of day**: the Today ring is green when the student is on track for the time of day, yellow when a bit behind or at 1.5× their need, and red when far behind or drinking too much. The water buddy looks dizzy when it's too much.
 - **Active hours**: reminders only arrive within a daily window, e.g. 9:00 AM–9:00 PM. The window can cross midnight.
 - **Log a drink**: a "+1 cup" button in the app, with undo. Each cup is 8 oz, and the default goal is 8 cups.
   - Notifications also have **"I drank a cup 💧"** and **"Snooze 1 hr"** buttons. To see them, press and hold a notification, or swipe it left and tap View. Test them in a development build; they may not appear in Expo Go.
@@ -18,9 +22,9 @@ The app works fully offline. Students can optionally **sign in with their Stanfo
 - **Light and dark mode**: follows the device by default; Settings → Appearance can force Light or Dark. The design uses Stanford Cardinal for actions and Stanford teal for water.
 - **Branding**: a launch screen with Flow State and SENSA's logo, and an About section that names Flow State as a SENSA student-organization project. See *Design and brand rules* below.
 - **Daily goal and streaks**: a progress ring, the current and best streaks, and a 7-day chart. The goal is recorded for each day, so changing it doesn't rewrite past streaks.
-- **Water calculator**: suggests a daily goal from weight, sex, exercise, hot weather, and pregnancy/breastfeeding, with a breakdown and a one-tap "Set as my daily goal". Answers stay on the phone. To open it, tap "Not sure? Calculate my goal" (in onboarding or Settings → Goal). The method and all its numbers are documented at the top of `src/domain/waterCalculator.ts` so the health team can review them. It is an estimate, not medical advice.
+- **Water calculator**: sets the starting daily goal from weight, sex, exercise, hot weather, and pregnancy/breastfeeding. It's a required onboarding step; students can then adjust the goal up or down any time. Settings → Goal → "Update my details in the calculator" reruns it with a breakdown and a one-tap "Set as my daily goal". Answers stay on the phone. Students who set up an earlier version see a one-time "Personalize your goal" card on Today. The method and all its numbers are documented at the top of `src/domain/waterCalculator.ts` so the health team can review them. It is an estimate, not medical advice.
 - **Pause**: for 1 hour, 2 hours, or the rest of today. The Settings switch turns reminders off entirely.
-- **Onboarding**: interval, then active hours, then goal, then the notification permission prompt. On the website: welcome, then goal.
+- **Onboarding**: welcome, about you (the calculator, required), your goal (prefilled from the calculator, adjustable), reminder interval and active hours, what happens after the goal, then the notification permission prompt. On the website: welcome, about you, then goal.
 - **Test reminder**: Settings → "Send a test reminder" fires one 10 seconds later.
 - **Friends (with an account)**: add friends by friend code, an invite link, or their exact Stanford email. The Friends tab shows each friend's cups today vs their goal and their streak, plus requests to accept or decline. Friends see only your name, today's cups and your streak; incoming requests also show the sender's Stanford email. Students can remove or block anyone, and can turn off being found by email.
 - **Anonymous impact stats (optional, on by default)**: daily cup totals with a random ID, never linked to an account, for SENSA's impact reports. Students can turn it off in Settings → Privacy.
@@ -146,9 +150,11 @@ npx eas-cli@latest submit --platform ios
 iOS lets an app have at most **64 pending local notifications**. The app also can't run code at each reminder time, because iOS only wakes apps occasionally. The design works within those limits:
 
 - **Each reminder time is a daily repeating notification.** Each time of day in the window (9:00, 9:15, …) is registered once as a `DAILY` trigger. iOS then delivers it every day, even if the student never opens the app again.
-- **The window is capped at 61 times a day** (`MAX_DAILY_SLOTS`). At 15-minute intervals that's a 15-hour window, and the app explains this when it shortens one. At 30 minutes the window can be up to 23.5 hours; at 1 hour, up to 23 hours.
+- **The window is capped at 58 times a day** (`MAX_DAILY_SLOTS`), leaving room for the 2 daily check-ins and a test reminder. At 15-minute intervals that's a 14¼-hour window, and the app explains this when it shortens one. At 30 minutes or longer the cap rarely matters.
 - **Pausing only affects the times inside the pause.** Each such time gets a one-time trigger at its first occurrence after the pause ends. All other times keep their daily triggers. When the app next opens (or the background task runs) after the pause, everything goes back to daily triggers. If the app is never reopened, only the paused times stop; the rest keep firing.
-- **Sync** (`src/sync.ts`) runs at launch, when the app returns to the foreground, after any settings change, and in a best-effort background task. It compares the desired plan to what's scheduled and only reschedules when they differ.
+- **Quiet time works the same way.** Reminders are also held back after the goal (when the student chose "Stop until tomorrow") and after a take-a-break warning. `reminderQuietUntil` in `src/domain/hydrationSafety.ts` combines these with a manual pause.
+- **Check-ins** are daily triggers too. Today's check-in becomes a one-time trigger for tomorrow if it has passed, the goal is met, reminders are quiet then, or the student would already be on pace at that time with the cups they have. Logging a cup reschedules, so catching up cancels it.
+- **Sync** (`src/sync.ts`) runs whenever today's cups change, at launch, when the app returns to the foreground, after any settings change, and in a best-effort background task. It compares the desired plan to what's scheduled and only reschedules when they differ.
 
 All of these rules live in one pure function, `buildSchedule` in `src/scheduling/buildSchedule.ts`, which the unit tests cover.
 

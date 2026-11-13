@@ -1,4 +1,4 @@
-import { MAX_DAILY_SLOTS } from '../../config';
+import { MAX_DAILY_SLOTS, normalizeInterval, INTERVAL_CHOICES } from '../../config';
 import {
   ReminderSettings,
   buildSchedule,
@@ -35,6 +35,7 @@ describe('buildSchedule', () => {
     expect(plan).toHaveLength(13); // 9:00 … 21:00
     expect(plan[0]).toEqual({
       id: 'hydrate-0900',
+      kind: 'reminder',
       minuteOfDay: hm(9),
       slotIndex: 0,
       trigger: { kind: 'daily', hour: 9, minute: 0 },
@@ -72,7 +73,7 @@ describe('buildSchedule', () => {
     );
     expect(plan.length).toBeLessThanOrEqual(MAX_DAILY_SLOTS);
     expect(plan).toHaveLength(MAX_DAILY_SLOTS);
-    expect(plan[plan.length - 1].minuteOfDay).toBe(hm(21)); // 6:00 + 15 h
+    expect(plan[plan.length - 1].minuteOfDay).toBe(hm(20, 15)); // 6:00 + 14 h 15 m
   });
 
   it('gives every slot a unique id', () => {
@@ -192,9 +193,14 @@ describe('clampWindow', () => {
     expect(clampWindow(hm(9), hm(21), 15)).toEqual({ activeStartMin: hm(9), activeEndMin: hm(21), intervalMinutes: 15, clamped: false });
   });
 
-  it('caps a 15-minute window at 15 hours', () => {
-    expect(maxWindowMinutes(15)).toBe(15 * 60);
-    expect(clampWindow(hm(7), hm(23, 30), 15)).toMatchObject({ activeEndMin: hm(22), clamped: true });
+  it('caps a 15-minute window at 14 h 15 m (iOS notification budget)', () => {
+    expect(maxWindowMinutes(15)).toBe(14 * 60 + 15);
+    expect(clampWindow(hm(7), hm(23, 30), 15)).toMatchObject({ activeEndMin: hm(21, 15), clamped: true });
+  });
+
+  it('never needs clamping at 1 hour or longer', () => {
+    expect(clampWindow(hm(0), hm(23), 60).clamped).toBe(false);
+    expect(clampWindow(hm(6), hm(23), 180).clamped).toBe(false);
   });
 
   it('allows up to 23 hours at hourly reminders', () => {
@@ -210,5 +216,98 @@ describe('reminderId', () => {
   it('zero-pads hours and minutes', () => {
     expect(reminderId(hm(7, 5))).toBe('hydrate-0705');
     expect(reminderId(hm(23, 45))).toBe('hydrate-2345');
+  });
+});
+
+describe('any interval from 15 minutes to 3 hours', () => {
+  it.each([
+    [45, [hm(9), hm(9, 45), hm(10, 30)]],
+    [90, [hm(9), hm(10, 30), hm(12)]],
+    [180, [hm(9), hm(12), hm(15), hm(18), hm(21)]],
+  ] as const)('%i-minute interval', (interval, firstSlots) => {
+    const plan = buildSchedule({ ...base, intervalMinutes: interval }, NOW);
+    expect(plan.slice(0, firstSlots.length).map((r) => r.minuteOfDay)).toEqual(firstSlots);
+  });
+
+  it('rounds and clamps intervals to the wheel', () => {
+    expect(normalizeInterval(5)).toBe(15);
+    expect(normalizeInterval(50)).toBe(45);
+    expect(normalizeInterval(500)).toBe(180);
+    expect(INTERVAL_CHOICES[0]).toBe(15);
+    expect(INTERVAL_CHOICES[INTERVAL_CHOICES.length - 1]).toBe(180);
+    expect(INTERVAL_CHOICES).toHaveLength(12);
+  });
+});
+
+describe('today-aware scheduling', () => {
+  const withCheckIns = { ...base, checkIns: true };
+  const today = (cups: number, quietUntil: number | null = null) => ({ cups, goal: 8, quietUntil });
+  const checkins = (plan: ReturnType<typeof buildSchedule>) => plan.filter((r) => r.kind === 'checkin');
+  const morning = at(2026, 10, 14, 10); // 10 AM; check-ins at 3 PM and 6 PM for 9 AM–9 PM
+
+  it('adds catch-up check-ins halfway and ¾ through the day', () => {
+    const plan = buildSchedule(withCheckIns, morning, today(0));
+    expect(checkins(plan).map((r) => [r.id, r.minuteOfDay])).toEqual([
+      ['hydrate-checkin-1500', hm(15)],
+      ['hydrate-checkin-1800', hm(18)],
+    ]);
+    // Behind with no cups: both fire today (daily triggers).
+    expect(checkins(plan).every((r) => r.trigger.kind === 'daily')).toBe(true);
+  });
+
+  it('skips a check-in today once the student would be on pace for it', () => {
+    // 3 PM expects 4 cups (on track from 3); 6 PM expects 6 (on track from 4.5).
+    const plan = buildSchedule(withCheckIns, morning, today(4));
+    const [three, six] = checkins(plan);
+    expect(three.trigger).toEqual({ kind: 'once', at: at(2026, 10, 15, 15) });
+    expect(six.trigger).toEqual({ kind: 'daily', hour: 18, minute: 0 });
+  });
+
+  it('skips check-ins that already passed, or once the goal is met', () => {
+    const evening = at(2026, 10, 14, 16);
+    const [three] = checkins(buildSchedule(withCheckIns, evening, today(0)));
+    expect(three.trigger).toEqual({ kind: 'once', at: at(2026, 10, 15, 15) });
+    const met = checkins(buildSchedule(withCheckIns, morning, today(8)));
+    expect(met.every((r) => r.trigger.kind === 'once')).toBe(true);
+  });
+
+  it('has no check-ins when turned off', () => {
+    expect(checkins(buildSchedule(base, morning, today(0)))).toEqual([]);
+  });
+
+  it('goal reached with "stop until tomorrow": remaining reminders and check-ins move to tomorrow', () => {
+    const quietUntil = at(2026, 10, 15, 9);
+    const plan = buildSchedule(withCheckIns, at(2026, 10, 14, 14, 30), today(8, quietUntil));
+    const reminders = plan.filter((r) => r.kind === 'reminder');
+    expect(reminders.filter((r) => r.trigger.kind === 'once').map((r) => r.minuteOfDay)).toEqual(
+      [15, 16, 17, 18, 19, 20, 21].map((h) => hm(h)),
+    );
+    expect(reminders.find((r) => r.id === 'hydrate-0900')!.trigger.kind).toBe('daily');
+    expect(checkins(plan).map((r) => r.trigger)).toEqual([
+      { kind: 'once', at: at(2026, 10, 15, 15) },
+      { kind: 'once', at: at(2026, 10, 15, 18) },
+    ]);
+  });
+
+  it('drinking fast: reminders pause for an hour after the last cup', () => {
+    const now = at(2026, 10, 14, 12, 5);
+    const plan = buildSchedule(withCheckIns, now, today(5, at(2026, 10, 14, 13, 5)));
+    const one = plan.find((r) => r.id === 'hydrate-1300')!;
+    expect(one.trigger).toEqual({ kind: 'once', at: at(2026, 10, 15, 13) });
+    expect(plan.find((r) => r.id === 'hydrate-1400')!.trigger.kind).toBe('daily');
+  });
+
+  it('the next-reminder label ignores check-ins', () => {
+    const plan = buildSchedule(withCheckIns, at(2026, 10, 14, 14, 30), today(0));
+    expect(nextReminderAt(plan, at(2026, 10, 14, 14, 30))).toBe(at(2026, 10, 14, 15));
+  });
+
+  it('stays within the iOS notification budget with check-ins', () => {
+    const plan = buildSchedule(
+      { ...withCheckIns, intervalMinutes: 15, activeStartMin: hm(6), activeEndMin: hm(23) },
+      morning,
+      today(0),
+    );
+    expect(plan.length).toBeLessThanOrEqual(60);
   });
 });

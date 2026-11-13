@@ -6,12 +6,15 @@ import { useTheme } from './theme';
 
 export function ProgressRing({
   progress,
+  color,
   size = 220,
   stroke = 18,
   children,
 }: {
   /** 0–1; values above 1 show a full ring. */
   progress: number;
+  /** Ring color; defaults to water blue, turning green at 100%. */
+  color?: string;
   size?: number;
   stroke?: number;
   children?: ReactNode;
@@ -30,7 +33,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke={done ? colors.success : colors.water}
+          stroke={color ?? (done ? colors.success : colors.water)}
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"

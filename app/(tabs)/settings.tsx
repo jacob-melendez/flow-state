@@ -15,7 +15,7 @@ import { STANFORD_LOGO } from '../../src/ui/brandAssets';
 import { SensaLogo } from '../../src/ui/SensaLogo';
 import { Button, Card, Row, SectionTitle, Segmented, Toggle } from '../../src/ui/components';
 import { PauseControls, ReminderStatus } from '../../src/ui/ReminderStatus';
-import { ActiveHoursFields, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
+import { ActiveHoursFields, AfterGoalField, GoalField, IntervalField } from '../../src/ui/ReminderSettingsForm';
 import { READABLE_WIDTH, makeStyles, spacing, useTheme } from '../../src/ui/theme';
 import type { AppearancePreference } from '../../src/ui/theme';
 
@@ -26,7 +26,8 @@ export default function SettingsScreen() {
   const styles = useStyles();
   const { colors, type, scheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { enabled, setEnabled, shareImpactStats, setShareImpactStats, appearance, setAppearance } = useSettings();
+  const { enabled, setEnabled, shareImpactStats, setShareImpactStats, appearance, setAppearance, checkIns, setCheckIns } =
+    useSettings();
   const permission = usePermission((s) => s.permission);
   const [testSent, setTestSent] = useState(false);
 
@@ -72,7 +73,7 @@ export default function SettingsScreen() {
 
         {enabled ? (
           <>
-            <SectionTitle>Remind me every</SectionTitle>
+            <SectionTitle>Reminder interval</SectionTitle>
             <Card>
               <IntervalField />
             </Card>
@@ -80,6 +81,25 @@ export default function SettingsScreen() {
             <SectionTitle>Active hours</SectionTitle>
             <Card>
               <ActiveHoursFields />
+            </Card>
+
+            <SectionTitle>After you reach your goal</SectionTitle>
+            <Card>
+              <AfterGoalField />
+            </Card>
+
+            <SectionTitle>Smart check-ins</SectionTitle>
+            <Card style={{ gap: spacing.xs }}>
+              <Row
+                label="Catch-up check-ins"
+                hint="A nudge halfway and ¾ through your day, only if you’re behind on water."
+              >
+                <Toggle accessibilityLabel="Catch-up check-ins" value={checkIns} onValueChange={setCheckIns} />
+              </Row>
+              <Text style={type.caption}>
+                If you drink a lot very quickly or far more than you need, Flow State asks you to take a break and
+                pauses reminders for a while.
+              </Text>
             </Card>
 
             <SectionTitle>Pause</SectionTitle>

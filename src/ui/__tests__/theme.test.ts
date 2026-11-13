@@ -41,6 +41,17 @@ const PAIRS: [Key, Key, number][] = [
   ['primary', 'card', 3],
   ['primary', 'background', 3],
   ['success', 'waterSoft', 3],
+  // Pace-colored progress ring (graphic: 3:1 against the screen and the ring track)
+  ['ringGood', 'background', 3],
+  ['ringGood', 'waterSoft', 3],
+  ['ringCaution', 'background', 3],
+  ['ringCaution', 'waterSoft', 3],
+  ['ringAlert', 'background', 3],
+  ['ringAlert', 'waterSoft', 3],
+  // Status text under the ring uses the status text colors on the screen background
+  ['success', 'background', 4.5],
+  ['warning', 'background', 4.5],
+  ['danger', 'background', 4.5],
 ];
 
 describe.each(['light', 'dark'] as const)('%s palette', (scheme) => {

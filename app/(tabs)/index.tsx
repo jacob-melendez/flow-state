@@ -5,13 +5,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CUP_OZ } from '../../src/config';
 import { buddyState } from '../../src/domain/buddy';
+import { TodayAssessment, assessToday } from '../../src/domain/today';
 import { bestStreak, countsByDay, currentStreak, lastNDays } from '../../src/domain/streaks';
 import { dateKey, parseDateKey } from '../../src/domain/time';
 import { useLog } from '../../src/state/logStore';
 import { useSettings } from '../../src/state/settingsStore';
-import { Card, SectionTitle } from '../../src/ui/components';
+import { Banner, Card, SectionTitle } from '../../src/ui/components';
 import { supportsReminders } from '../../src/platform';
 import { FriendsCard } from '../../src/ui/FriendsCard';
+import { PersonalizeCard } from '../../src/ui/PersonalizeCard';
 import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { WaterBuddy } from '../../src/ui/WaterBuddy';
@@ -21,13 +23,35 @@ import { useNow } from '../../src/ui/useNow';
 
 const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+/** The line under the ring: pace or safety first, otherwise the buddy's cheer. */
+function statusText(t: TodayAssessment, buddyCaption: string): string {
+  if (t.intake.level === 'warning') return 'That’s plenty. Take a break 🫧';
+  if (t.intake.level === 'caution') return 'Well past your goal. Ease off for now.';
+  if (t.goalMet) return buddyCaption;
+  if (t.pace === 'farBehind') return 'Far behind for this time of day. Time to catch up!';
+  if (t.pace === 'behind') return 'A bit behind. Have a cup when you can.';
+  return t.cups === 0 ? buddyCaption : 'On track for this time of day ✓';
+}
+
 export default function TodayScreen() {
   const styles = useStyles();
   const { colors, type } = useTheme();
   const insets = useSafeAreaInsets();
   const now = useNow(60_000);
-  const goal = useSettings((s) => s.dailyGoal);
+  const { dailyGoal: goal, calculatorProfile, activeStartMin, activeEndMin, pausedUntil, afterGoal } = useSettings();
   const { entries, goalByDay, logCup, undoLastToday } = useLog();
+
+  // Pace (on track for this time of day?) and safety (too much?) drive the ring color.
+  const todayStatus = useMemo(
+    () =>
+      assessToday(
+        { entries, goal, calculator: calculatorProfile, window: { activeStartMin, activeEndMin }, pausedUntil, afterGoal },
+        now,
+      ),
+    [entries, goal, calculatorProfile, activeStartMin, activeEndMin, pausedUntil, afterGoal, now],
+  );
+  const ringColor = { good: colors.ringGood, caution: colors.ringCaution, alert: colors.ringAlert }[todayStatus.ring];
+  const overfull = todayStatus.intake.level === 'warning';
 
   const stats = useMemo(() => {
     const counts = countsByDay(entries);
@@ -39,7 +63,8 @@ export default function TodayScreen() {
     };
   }, [entries, goalByDay, goal, now]);
 
-  const met = stats.today >= goal;
+  const statusColor = (ring: TodayAssessment['ring']) =>
+    ring === 'alert' ? colors.danger : ring === 'caution' ? colors.warning : colors.success;
 
   const onLog = () => {
     logCup(goal);
@@ -59,17 +84,33 @@ export default function TodayScreen() {
     >
       <Text style={type.title}>Today</Text>
 
+      <View style={{ marginTop: spacing.lg }}>
+        <PersonalizeCard />
+      </View>
+
       <View style={styles.ringWrap}>
-        <ProgressRing progress={stats.today / goal} size={240}>
-          <WaterBuddy cups={stats.today} goal={goal} size={160} />
+        <ProgressRing progress={stats.today / goal} size={240} color={ringColor}>
+          <WaterBuddy cups={stats.today} goal={goal} size={160} overfull={overfull} />
         </ProgressRing>
         <Text style={styles.count} accessibilityLabel={`${stats.today} of ${goal} cups today`}>
           {stats.today} <Text style={styles.countOf}>of {goal} cups</Text>
         </Text>
-        <Text style={[type.caption, styles.caption, met && styles.metText]}>
-          {stats.today * CUP_OZ} oz · {buddyState(stats.today, goal).caption}
+        <Text style={[type.caption, styles.caption, { color: statusColor(todayStatus.ring) }]}>
+          {stats.today * CUP_OZ} oz · {statusText(todayStatus, buddyState(stats.today, goal).caption)}
         </Text>
       </View>
+
+      {todayStatus.intake.level !== 'ok' ? (
+        <View style={{ marginBottom: spacing.lg }}>
+          <Banner tone="warning">
+            {todayStatus.intake.reason === 'fast'
+              ? 'That’s a lot of water in a short time. Take a break for at least an hour; reminders are paused.'
+              : todayStatus.intake.level === 'warning'
+                ? 'You’re well past what you need today. Take a break and drink only when thirsty. Reminders are paused for today.'
+                : 'You’re well past your goal. No need to push more water today; drink when you’re thirsty.'}
+          </Banner>
+        </View>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"

@@ -11,6 +11,8 @@ import { buildSchedule, pauseForHours, planSignature } from './scheduling/buildS
 import { waitForHydration } from './state/hydration';
 import { useLog } from './state/logStore';
 import { reminderSettingsOf, useSettings } from './state/settingsStore';
+import { currentToday } from './state/today';
+import { dateKey } from './domain/time';
 
 let queue: Promise<void> = Promise.resolve();
 let lastAppliedSignature: string | null = null;
@@ -28,7 +30,15 @@ async function runSync(): Promise<void> {
   if (pausedUntil != null && pausedUntil <= now) resume();
 
   const permission = await getPermission();
-  const plan = permission === 'granted' ? buildSchedule(reminderSettingsOf(useSettings.getState()), now) : [];
+  const today = currentToday(now);
+  const plan =
+    permission === 'granted'
+      ? buildSchedule(reminderSettingsOf(useSettings.getState()), now, {
+          cups: today.cups,
+          goal: today.goal,
+          quietUntil: today.quietUntil,
+        })
+      : [];
   const signature = planSignature(plan);
 
   const scheduled = await getScheduledReminderIds();
@@ -41,7 +51,12 @@ async function runSync(): Promise<void> {
 
 let bound = false;
 
-/** Re-sync whenever schedule-related settings change; record goal changes for streak history. */
+/**
+ * Re-sync whenever schedule-related settings change, and whenever today's cups
+ * change (logging, undo, a notification action or a cloud merge), so goal-met,
+ * catch-up check-ins and drinking-too-much breaks apply right away.
+ * Also records goal changes for streak history.
+ */
 export function bindStoreSync(): void {
   if (bound) return;
   bound = true;
@@ -51,12 +66,31 @@ export function bindStoreSync(): void {
       s.intervalMinutes !== prev.intervalMinutes ||
       s.activeStartMin !== prev.activeStartMin ||
       s.activeEndMin !== prev.activeEndMin ||
-      s.pausedUntil !== prev.pausedUntil
+      s.pausedUntil !== prev.pausedUntil ||
+      s.afterGoal !== prev.afterGoal ||
+      s.checkIns !== prev.checkIns ||
+      s.dailyGoal !== prev.dailyGoal ||
+      s.calculatorProfile !== prev.calculatorProfile
     ) {
       syncReminders();
     }
     if (s.dailyGoal !== prev.dailyGoal) useLog.getState().recordGoal(s.dailyGoal);
   });
+  let lastKey = todayKey();
+  useLog.subscribe(() => {
+    const key = todayKey();
+    if (key !== lastKey) {
+      lastKey = key;
+      syncReminders();
+    }
+  });
+}
+
+/** Today's live cups and the time of the latest one; changes when cups are logged or removed. */
+function todayKey(): string {
+  const now = Date.now();
+  const t = currentToday(now);
+  return `${dateKey(now)}:${t.cups}:${t.lastCupAt ?? ''}`;
 }
 
 const handledResponses = new Set<string>();

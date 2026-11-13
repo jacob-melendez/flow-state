@@ -2,7 +2,7 @@
  * The water buddy: a little droplet character on the Today screen that grows,
  * fills with water and gets happier as cups are logged. Pure; no UI.
  */
-export type BuddyMood = 'thirsty' | 'okay' | 'happy' | 'thrilled';
+export type BuddyMood = 'thirsty' | 'okay' | 'happy' | 'thrilled' | 'overfull';
 
 export interface BuddyState {
   mood: BuddyMood;
@@ -16,7 +16,11 @@ export interface BuddyState {
 
 export const MIN_SCALE = 0.55;
 
-export function buddyState(cups: number, goal: number): BuddyState {
+/**
+ * @param overfull true when the student is drinking too much (see hydrationSafety):
+ * the buddy looks dizzy and asks for a break.
+ */
+export function buddyState(cups: number, goal: number, overfull = false): BuddyState {
   const progress = goal > 0 ? Math.max(0, cups) / goal : 0;
   const p = Math.min(1, progress);
 
@@ -34,6 +38,11 @@ export function buddyState(cups: number, goal: number): BuddyState {
   } else {
     mood = 'thrilled';
     caption = progress > 1 ? 'Goal smashed! 💧' : 'Goal reached! You’re in flow.';
+  }
+
+  if (overfull) {
+    mood = 'overfull';
+    caption = 'Whoa, that’s a lot! Let’s take a break.';
   }
 
   return {

@@ -59,6 +59,18 @@ function Face({ mood }: { mood: BuddyMood }) {
           <Path d="M42 69 q8 8 16 0" {...stroke} />
         </G>
       );
+    case 'overfull':
+      return (
+        <G>
+          {/* swirly dizzy eyes and a wobbly mouth */}
+          <Circle cx={42} cy={60} r={3.6} {...stroke} strokeWidth={1.8} />
+          <Circle cx={42} cy={60} r={1.2} fill={BUDDY.face} />
+          <Circle cx={58} cy={60} r={3.6} {...stroke} strokeWidth={1.8} />
+          <Circle cx={58} cy={60} r={1.2} fill={BUDDY.face} />
+          <Path d="M42 72 q2 -2.5 4 0 t4 0 t4 0 t4 0" {...stroke} strokeWidth={2} />
+          <Path d="M68 46 q2.5 4 0 6 q-2.5 -2 0 -6 Z" fill={BUDDY.water} />
+        </G>
+      );
     case 'thrilled':
       return (
         <G>
@@ -87,8 +99,18 @@ function Sparkle({ x, y, s }: { x: number; y: number; s: number }) {
  * A droplet character that grows, fills with water and cheers up as cups are
  * logged. `size` is its size at the goal; it starts at about half that.
  */
-export function WaterBuddy({ cups, goal, size = 160 }: { cups: number; goal: number; size?: number }) {
-  const state = buddyState(cups, goal);
+export function WaterBuddy({
+  cups,
+  goal,
+  size = 160,
+  overfull = false,
+}: {
+  cups: number;
+  goal: number;
+  size?: number;
+  overfull?: boolean;
+}) {
+  const state = buddyState(cups, goal, overfull);
   const [scale] = useState(() => new Animated.Value(state.scale));
   const first = useRef(true);
   const useNativeDriver = Platform.OS !== 'web';

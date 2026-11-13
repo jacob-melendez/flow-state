@@ -8,6 +8,7 @@ import {
   DEFAULT_INTERVAL,
   IMPACT_STATS_DEFAULT,
   IntervalMinutes,
+  normalizeInterval,
   MAX_GOAL_CUPS,
   MIN_GOAL_CUPS,
 } from '../config';
@@ -15,6 +16,8 @@ import { CalculatorInput } from '../domain/waterCalculator';
 import { ReminderSettings, clampWindow } from '../scheduling/buildSchedule';
 import type { AppearancePreference } from '../ui/theme';
 import { deviceStorage } from './storage';
+
+export type AfterGoal = 'keep' | 'stop';
 
 export interface SettingsState extends ReminderSettings {
   dailyGoal: number;
@@ -31,6 +34,14 @@ export interface SettingsState extends ReminderSettings {
   impactReportedThrough: string | null;
   /** Light/dark mode: follow the device (default) or force one. */
   appearance: AppearancePreference;
+  /** After reaching the day's goal: keep reminding, or stop until tomorrow. */
+  afterGoal: AfterGoal;
+  /** "You're behind on water" check-ins halfway and ¾ through the day. */
+  checkIns: boolean;
+  /** Day (YYYY-MM-DD) and rule of the last "too much water" warning, so it's shown once per day per rule. */
+  lastSafetyWarning: { day: string; reason: 'total' | 'fast' }[];
+  /** The one-time "Personalize your goal" card on Today was dismissed. */
+  personalizeDismissed: boolean;
 
   setEnabled: (enabled: boolean) => void;
   setInterval: (interval: IntervalMinutes) => void;
@@ -44,6 +55,9 @@ export interface SettingsState extends ReminderSettings {
   setCalculatorProfile: (profile: CalculatorInput) => void;
   setShareImpactStats: (share: boolean) => void;
   setAppearance: (appearance: AppearancePreference) => void;
+  setAfterGoal: (afterGoal: AfterGoal) => void;
+  setCheckIns: (checkIns: boolean) => void;
+  dismissPersonalize: () => void;
 }
 
 const clampGoal = (goal: number) => Math.max(MIN_GOAL_CUPS, Math.min(MAX_GOAL_CUPS, Math.round(goal)));
@@ -65,9 +79,14 @@ export const useSettings = create<SettingsState>()(
       installId: null,
       impactReportedThrough: null,
       appearance: 'system',
+      afterGoal: 'keep',
+      checkIns: true,
+      lastSafetyWarning: [],
+      personalizeDismissed: false,
 
       setEnabled: (enabled) => set({ enabled, pausedUntil: null }),
-      setInterval: (intervalMinutes) => {
+      setInterval: (minutes) => {
+        const intervalMinutes = normalizeInterval(minutes);
         const w = clampWindow(get().activeStartMin, get().activeEndMin, intervalMinutes);
         set({ intervalMinutes, activeStartMin: w.activeStartMin, activeEndMin: w.activeEndMin, windowWasClamped: w.clamped });
       },
@@ -86,6 +105,9 @@ export const useSettings = create<SettingsState>()(
       setCalculatorProfile: (calculatorProfile) => set({ calculatorProfile }),
       setShareImpactStats: (shareImpactStats) => set({ shareImpactStats }),
       setAppearance: (appearance) => set({ appearance }),
+      setAfterGoal: (afterGoal) => set({ afterGoal }),
+      setCheckIns: (checkIns) => set({ checkIns }),
+      dismissPersonalize: () => set({ personalizeDismissed: true }),
     }),
     {
       name: 'flow-state/settings',
@@ -105,6 +127,10 @@ export const useSettings = create<SettingsState>()(
         installId,
         impactReportedThrough,
         appearance,
+        afterGoal,
+        checkIns,
+        lastSafetyWarning,
+        personalizeDismissed,
       }) => ({
         enabled,
         intervalMinutes,
@@ -119,6 +145,10 @@ export const useSettings = create<SettingsState>()(
         installId,
         impactReportedThrough,
         appearance,
+        afterGoal,
+        checkIns,
+        lastSafetyWarning,
+        personalizeDismissed,
       }),
       // Add cases here when the stored shape changes (e.g. accounts in v2).
       migrate: (persisted) => persisted as SettingsState,
@@ -133,5 +163,6 @@ export function reminderSettingsOf(s: SettingsState): ReminderSettings {
     activeStartMin: s.activeStartMin,
     activeEndMin: s.activeEndMin,
     pausedUntil: s.pausedUntil,
+    checkIns: s.checkIns,
   };
 }

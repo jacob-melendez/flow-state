@@ -46,6 +46,10 @@ export interface Palette {
   danger: string;
   /** Tab bar and header backgrounds. */
   chrome: string;
+  /** Progress ring by pace: on track / a bit off / far off (behind or too much). */
+  ringGood: string;
+  ringCaution: string;
+  ringAlert: string;
 }
 
 /** Official Stanford brand colors, for reference (use the palette tokens in UI). */
@@ -82,6 +86,9 @@ export const palettes: Record<ColorScheme, Palette> = {
     warningSoft: '#FCEFDD',
     danger: STANFORD.brightRed,
     chrome: '#FFFFFF',
+    ringGood: '#1E8A5A',
+    ringCaution: '#AD7300',
+    ringAlert: STANFORD.brightRed,
   },
   dark: {
     background: '#141312',
@@ -107,6 +114,9 @@ export const palettes: Record<ColorScheme, Palette> = {
     warningSoft: '#3A2B14',
     danger: '#FF7A73',
     chrome: '#1B1A18',
+    ringGood: '#6FD3A8',
+    ringCaution: '#F4C04F',
+    ringAlert: '#FF6B6B',
   },
 };
 

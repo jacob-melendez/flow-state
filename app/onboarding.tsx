@@ -9,12 +9,14 @@ import { APP_FULL_NAME, ORG_NAME } from '../src/config';
 import { usePermission } from '../src/state/permissionStore';
 import { useSettings } from '../src/state/settingsStore';
 import { Button, Card } from '../src/ui/components';
-import { ActiveHoursFields, GoalField, IntervalField } from '../src/ui/ReminderSettingsForm';
+import { WaterEstimate } from '../src/domain/waterCalculator';
+import { CalculatorForm } from '../src/ui/CalculatorForm';
+import { ActiveHoursFields, AfterGoalField, GoalField, IntervalField } from '../src/ui/ReminderSettingsForm';
 import { READABLE_WIDTH, makeStyles, spacing, useTheme } from '../src/ui/theme';
 
-const ALL_STEPS = ['welcome', 'interval', 'hours', 'goal', 'notifications'] as const;
+const ALL_STEPS = ['welcome', 'about', 'goal', 'reminders', 'afterGoal', 'notifications'] as const;
 // The website has no reminders, so it skips the reminder and notification steps.
-const STEPS = supportsReminders ? ALL_STEPS : (['welcome', 'goal'] as const);
+const STEPS: readonly (typeof ALL_STEPS)[number][] = supportsReminders ? ALL_STEPS : ['welcome', 'about', 'goal'];
 
 export default function OnboardingScreen() {
   const styles = useStyles();
@@ -22,9 +24,23 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const completeOnboarding = useSettings((s) => s.completeOnboarding);
+  const setDailyGoal = useSettings((s) => s.setDailyGoal);
+  const [estimate, setEstimate] = useState<WaterEstimate | null>(null);
+  // The estimate last applied as the goal, so going Back and Continue again
+  // doesn't overwrite an adjustment made on the goal step.
+  const [appliedCups, setAppliedCups] = useState<number | null>(null);
   const requestPermission = usePermission((s) => s.request);
 
-  const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  const next = () => {
+    // Leaving "About you": the calculator's estimate becomes the starting goal.
+    if (STEPS[step] === 'about' && estimate && estimate.cups !== appliedCups) {
+      setDailyGoal(estimate.cups);
+      setAppliedCups(estimate.cups);
+    }
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
+  // The calculator is required: no moving on without a valid estimate.
+  const canContinue = STEPS[step] !== 'about' || estimate !== null;
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   // Android back button: go back a step instead of leaving the app mid-setup.
@@ -55,27 +71,55 @@ export default function OnboardingScreen() {
         </Step>
       );
       break;
-    case 'interval':
+    case 'about':
       content = (
-        <Step emoji="⏰" title="How often should we remind you?" subtitle="You can change this any time.">
-          <IntervalField />
+        <Step emoji="🧮" title="About you" subtitle="A few quick questions to set a daily water goal that fits you.">
+          <CalculatorForm onEstimateChange={setEstimate} showBreakdown={false} />
         </Step>
       );
       break;
-    case 'hours':
+    case 'goal':
       content = (
-        <Step emoji="🌙" title="When are you awake?" subtitle="We’ll only send reminders during these hours.">
+        <Step
+          emoji="🎯"
+          title="Your daily goal"
+          subtitle={
+            estimate
+              ? `Based on your answers: ${estimate.cups} cups (${estimate.oz} oz). Adjust it if it feels too high or low; you can change it any time in Settings.`
+              : 'Adjust it any time in Settings.'
+          }
+        >
+          <Card>
+            <GoalField showCalculatorLink={false} />
+          </Card>
+        </Step>
+      );
+      break;
+    case 'reminders':
+      content = (
+        <Step
+          emoji="⏰"
+          title="Your reminders"
+          subtitle="How often, and only while you’re awake. Change these any time."
+        >
+          <Card>
+            <IntervalField />
+          </Card>
           <Card>
             <ActiveHoursFields />
           </Card>
         </Step>
       );
       break;
-    case 'goal':
+    case 'afterGoal':
       content = (
-        <Step emoji="🎯" title="Set a daily goal" subtitle="8 cups (64 oz) is a common starting point.">
+        <Step
+          emoji="🏁"
+          title="After you reach your goal"
+          subtitle="Do you still want reminders once you’ve hit your goal for the day?"
+        >
           <Card>
-            <GoalField />
+            <AfterGoalField />
           </Card>
         </Step>
       );
@@ -89,8 +133,9 @@ export default function OnboardingScreen() {
           </Text>
           {cloudEnabled ? (
             <Text style={[type.caption, { lineHeight: 19 }]}>
-              To help SENSA Impact Labs measure impact, Flow State shares anonymous daily totals (cups and whether you met
-              your goal) with a random ID that isn’t linked to you. You can turn this off any time in Settings → Privacy.
+              To help SENSA Impact Labs measure impact, Flow State shares anonymous daily totals (cups and whether you
+              met your goal) with a random ID that isn’t linked to you. You can turn this off any time in Settings →
+              Privacy.
             </Text>
           ) : null}
         </Step>
@@ -118,12 +163,12 @@ export default function OnboardingScreen() {
           </>
         ) : last ? (
           <>
-            <Button label="Start tracking" onPress={() => finish(false)} />
+            <Button label="Start tracking" onPress={() => finish(false)} disabled={!canContinue} />
             <Button variant="ghost" label="Back" onPress={back} />
           </>
         ) : (
           <>
-            <Button label={step === 0 ? 'Get started' : 'Continue'} onPress={next} />
+            <Button label={step === 0 ? 'Get started' : 'Continue'} onPress={next} disabled={!canContinue} />
             {step > 0 ? <Button variant="ghost" label="Back" onPress={back} /> : null}
           </>
         )}
@@ -132,7 +177,17 @@ export default function OnboardingScreen() {
   );
 }
 
-function Step({ emoji, title, subtitle, children }: { emoji: string; title: string; subtitle?: string; children: ReactNode }) {
+function Step({
+  emoji,
+  title,
+  subtitle,
+  children,
+}: {
+  emoji: string;
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+}) {
   const styles = useStyles();
   const { type } = useTheme();
   return (
@@ -149,10 +204,11 @@ function Step({ emoji, title, subtitle, children }: { emoji: string; title: stri
 
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
-  screen: { ...READABLE_WIDTH, flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
-  dotActive: { backgroundColor: colors.primary, width: 24 },
-  emoji: { fontSize: 56 },
-  body: { ...type.body, lineHeight: 24 },
-}));
+    screen: { ...READABLE_WIDTH, flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl },
+    dots: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
+    dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+    dotActive: { backgroundColor: colors.primary, width: 24 },
+    emoji: { fontSize: 56 },
+    body: { ...type.body, lineHeight: 24 },
+  }),
+);

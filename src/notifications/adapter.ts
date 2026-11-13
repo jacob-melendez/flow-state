@@ -15,7 +15,7 @@ import {
   REMINDER_ID_PREFIX,
 } from '../config';
 import { PlannedReminder } from '../scheduling/buildSchedule';
-import { messageForSlot } from './messages';
+import { messageFor, messageForSlot } from './messages';
 
 export type PermissionState = 'granted' | 'denied' | 'undetermined';
 
@@ -100,10 +100,10 @@ export async function applyPlan(plan: PlannedReminder[]): Promise<void> {
   const existing = await getScheduledReminderIds();
   await Promise.all(existing.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
   for (const r of plan) {
-    const { title, body } = messageForSlot(r.slotIndex);
+    const { title, body } = messageFor(r.kind, r.slotIndex);
     await Notifications.scheduleNotificationAsync({
       identifier: r.id,
-      content: { title, body, sound: true, categoryIdentifier: NOTIFICATION_CATEGORY, data: { kind: 'reminder' } },
+      content: { title, body, sound: true, categoryIdentifier: NOTIFICATION_CATEGORY, data: { kind: r.kind } },
       trigger: toTrigger(r),
     });
   }
@@ -121,5 +121,14 @@ export async function sendTestReminder(seconds = 10): Promise<void> {
       repeats: false,
       channelId: Platform.OS === 'android' ? ANDROID_CHANNEL_ID : undefined,
     },
+  });
+}
+
+/** Shows a notification right away (used for "take a break" safety messages). */
+export async function presentNow(title: string, body: string): Promise<void> {
+  await Notifications.scheduleNotificationAsync({
+    identifier: `safety-${Date.now()}`,
+    content: { title, body, sound: true, data: { kind: 'safety' } },
+    trigger: null,
   });
 }
