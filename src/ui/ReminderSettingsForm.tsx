@@ -1,19 +1,42 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { INTERVAL_OPTIONS, MAX_GOAL_CUPS, MIN_GOAL_CUPS } from '../config';
+import { MAX_GOAL_CUPS, MIN_GOAL_CUPS } from '../config';
 import { formatDuration, slotCount, windowLength } from '../domain/time';
 import { maxWindowMinutes } from '../scheduling/buildSchedule';
 import { useSettings } from '../state/settingsStore';
 import { Banner, Row, Segmented, Stepper } from './components';
+import { IntervalPicker, intervalLabel } from './IntervalPicker';
 import { TimeField } from './TimeField';
 import { spacing, useTheme } from './theme';
 
-const intervalLabel = (m: number) => (m === 60 ? '1 hour' : `${m} min`);
-
 export function IntervalField() {
   const { intervalMinutes, setInterval } = useSettings();
-  return <Segmented options={INTERVAL_OPTIONS} value={intervalMinutes} onChange={setInterval} format={intervalLabel} />;
+  return <IntervalPicker value={intervalMinutes} onChange={setInterval} />;
+}
+
+const AFTER_GOAL_OPTIONS = ['keep', 'stop'] as const;
+const AFTER_GOAL_LABELS = { keep: 'Keep reminding me', stop: 'Stop until tomorrow' } as const;
+
+/** What happens to reminders once the day's goal is reached. */
+export function AfterGoalField() {
+  const { type } = useTheme();
+  const { afterGoal, setAfterGoal } = useSettings();
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <Segmented
+        options={AFTER_GOAL_OPTIONS}
+        value={afterGoal}
+        onChange={setAfterGoal}
+        format={(o) => AFTER_GOAL_LABELS[o]}
+      />
+      <Text style={type.caption}>
+        {afterGoal === 'stop'
+          ? 'Once you reach your goal, reminders pause until your active hours start tomorrow.'
+          : 'Reminders keep coming after you reach your goal.'}
+      </Text>
+    </View>
+  );
 }
 
 export function ActiveHoursFields() {
@@ -44,7 +67,7 @@ export function ActiveHoursFields() {
   );
 }
 
-export function GoalField() {
+export function GoalField({ showCalculatorLink = true }: { showCalculatorLink?: boolean }) {
   const { colors } = useTheme();
   const { dailyGoal, setDailyGoal } = useSettings();
   return (
@@ -59,14 +82,16 @@ export function GoalField() {
           format={(v) => `${v} cups`}
         />
       </Row>
-      <Text
-        accessibilityRole="button"
-        accessibilityHint="Opens the water calculator"
-        onPress={() => router.push('/calculator')}
-        style={{ color: colors.primaryText, fontSize: 15, fontWeight: '600', paddingTop: spacing.sm }}
-      >
-        Not sure? Calculate my goal →
-      </Text>
+      {showCalculatorLink ? (
+        <Text
+          accessibilityRole="button"
+          accessibilityHint="Opens the water calculator"
+          onPress={() => router.push('/calculator')}
+          style={{ color: colors.primaryText, fontSize: 15, fontWeight: '600', paddingTop: spacing.sm }}
+        >
+          Update my details in the calculator →
+        </Text>
+      ) : null}
     </View>
   );
 }

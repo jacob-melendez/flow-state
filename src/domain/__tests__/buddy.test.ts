@@ -33,6 +33,11 @@ describe('buddyState', () => {
     expect(buddyState(7, 8).caption).toBe('One more cup to go!');
   });
 
+  it('looks dizzy and asks for a break when drinking too much', () => {
+    expect(buddyState(5, 8, true)).toMatchObject({ mood: 'overfull', caption: 'Whoa, that’s a lot! Let’s take a break.' });
+    expect(buddyState(5, 8, true).fill).toBe(buddyState(5, 8).fill);
+  });
+
   it('handles odd goals safely', () => {
     expect(buddyState(3, 0).mood).toBe('okay');
     expect(buddyState(-1, 8).mood).toBe('thirsty');

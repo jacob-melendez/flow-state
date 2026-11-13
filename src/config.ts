@@ -16,8 +16,23 @@ export const ORG_NAME = 'SENSA Impact Labs · Health & Wellness';
 /** SENSA's website, shown in Settings → About when set. */
 export const SENSA_URL: string | null = null;
 
-export const INTERVAL_OPTIONS = [15, 30, 60] as const;
-export type IntervalMinutes = (typeof INTERVAL_OPTIONS)[number];
+/** Reminder interval: any multiple of 15 minutes from 15 min to 3 hours (scroll wheel). */
+export const INTERVAL_MIN = 15;
+export const INTERVAL_MAX = 180;
+export const INTERVAL_STEP = 15;
+export type IntervalMinutes = number;
+
+/** Rounds to the 15-minute grid and keeps it within 15 min – 3 h. */
+export function normalizeInterval(minutes: number): IntervalMinutes {
+  const rounded = Math.round(minutes / INTERVAL_STEP) * INTERVAL_STEP;
+  return Math.min(INTERVAL_MAX, Math.max(INTERVAL_MIN, Number.isFinite(rounded) ? rounded : DEFAULT_INTERVAL));
+}
+
+/** Every allowed interval, for the picker. */
+export const INTERVAL_CHOICES: IntervalMinutes[] = Array.from(
+  { length: (INTERVAL_MAX - INTERVAL_MIN) / INTERVAL_STEP + 1 },
+  (_, i) => INTERVAL_MIN + i * INTERVAL_STEP,
+);
 
 /** One logged "cup" is 8 fl oz (~237 mL). */
 export const CUP_OZ = 8;
@@ -32,12 +47,13 @@ export const DEFAULT_ACTIVE_START = 9 * 60; // 9:00 AM
 export const DEFAULT_ACTIVE_END = 21 * 60; // 9:00 PM
 
 /**
- * iOS keeps at most 64 pending local notifications per app. Each reminder time
- * of day uses one slot, so we cap the number of daily reminder times and leave
- * a few slots for test reminders and future features.
- * 61 slots = a 15-hour window at 15-minute intervals (both ends inclusive).
+ * iOS keeps at most 64 pending local notifications per app. Budget:
+ * up to 58 reminder times a day + 2 catch-up check-ins + 1 test reminder,
+ * with a little room to spare. 58 slots = a 14 h 15 min window at 15-minute
+ * intervals (both ends inclusive); at the default 1 hour it's never reached.
  */
-export const MAX_DAILY_SLOTS = 61;
+export const MAX_DAILY_SLOTS = 58;
+export const CHECK_IN_ID_PREFIX = 'hydrate-checkin-';
 
 /** Prefix for every reminder notification identifier we schedule. */
 export const REMINDER_ID_PREFIX = 'hydrate-';
