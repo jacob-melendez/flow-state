@@ -45,7 +45,6 @@ export default function FriendsScreen() {
     // This build isn't connected to a backend, so there are no accounts yet.
     body = (
       <Card style={{ gap: spacing.md }}>
-        <Text style={styles.bigEmoji}>🤝</Text>
         <Text style={type.heading}>Stay hydrated together</Text>
         <Text style={styles.muted}>
           Add friends with a friend code, an invite link or their Stanford email, then cheer each other on. Friends see
@@ -60,7 +59,6 @@ export default function FriendsScreen() {
   } else if (status !== 'signed-in') {
     body = (
       <Card style={{ gap: spacing.md }}>
-        <Text style={styles.bigEmoji}>🤝</Text>
         <Text style={type.heading}>Stay hydrated together</Text>
         <Text style={styles.muted}>
           Sign in with your Stanford email to add friends and cheer each other on. Friends see only your name, today’s cups

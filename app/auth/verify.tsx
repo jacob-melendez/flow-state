@@ -6,6 +6,7 @@ import { requestCloudSync, sendCode, signOut, verifyCode } from '../../src/cloud
 import { replaceLocalDataWith } from '../../src/cloud/cloudSync';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
+import { useCloseAuth } from '../../src/ui/useCloseAuth';
 import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 const CODE_LENGTH = 6;
@@ -29,6 +30,7 @@ export default function VerifyScreen() {
   const styles = useStyles();
   const { colors, type } = useTheme();
   const { email } = useLocalSearchParams<{ email: string }>();
+  const close = useCloseAuth();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,7 +56,7 @@ export default function VerifyScreen() {
       if (!(await confirmReplace(email))) {
         await signOut();
         setBusy(false);
-        router.dismissAll();
+        close();
         return;
       }
       replaceLocalDataWith(result.userId);
@@ -62,7 +64,7 @@ export default function VerifyScreen() {
     requestCloudSync();
     setBusy(false);
     if (result.needsName) router.replace('/auth/profile');
-    else router.dismissAll();
+    else close();
   };
 
   const resend = async () => {
@@ -74,9 +76,8 @@ export default function VerifyScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ModalHeader title="Enter code" action="Cancel" onAction={() => router.dismissAll()} />
+      <ModalHeader title="Enter code" action="Cancel" onAction={close} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.emoji}>📬</Text>
         <Text style={type.title}>Check your email</Text>
         <Text style={styles.body}>
           We sent a {CODE_LENGTH}-digit code to <Text style={{ fontWeight: '700', color: colors.text }}>{email}</Text>. It may
@@ -124,7 +125,6 @@ export default function VerifyScreen() {
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
   content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
-  emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   code: {
     fontSize: 34,

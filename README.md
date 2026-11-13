@@ -122,6 +122,8 @@ Free Apple ID builds expire after 7 days; run the command again to reinstall. Re
 
 ### Later: TestFlight and the App Store
 
+The full launch checklist (website, App Store and Google Play, and the decisions to make first) is in [docs/release.md](docs/release.md).
+
 Once the team has an [Apple Developer Program](https://developer.apple.com/programs/) membership ($99/yr):
 
 ```bash
@@ -199,6 +201,7 @@ supabase/
   migrations/                Database tables, security rules (run once per Supabase project)
   tests/                     Database tests (npm run test:db)
 docs/backend-setup.md        Step-by-step Supabase setup, and how to view impact stats
+docs/release.md              Launch checklist: website, App Store, Google Play
 docs/android.md              Testing on Android, APK builds, Google Play
 docs/deploy-web.md           Building and hosting the website
 scripts/render-icons.mjs     Regenerates the app icons from the water-buddy artwork

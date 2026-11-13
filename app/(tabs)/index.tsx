@@ -25,7 +25,7 @@ const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /** The line under the ring: pace or safety first, otherwise the buddy's cheer. */
 function statusText(t: TodayAssessment, buddyCaption: string): string {
-  if (t.intake.level === 'warning') return 'That’s plenty. Take a break 🫧';
+  if (t.intake.level === 'warning') return 'That’s plenty. Take a break.';
   if (t.intake.level === 'caution') return 'Well past your goal. Ease off for now.';
   if (t.goalMet) return buddyCaption;
   if (t.pace === 'farBehind') return 'Far behind for this time of day. Time to catch up!';
