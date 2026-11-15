@@ -56,6 +56,9 @@ export function friendlyError(e: unknown): string {
     return 'That code is wrong or has expired. Check the latest email or send a new code.';
   if (code.startsWith('over_') || /rate limit|too many/i.test(message))
     return 'Too many attempts. Please wait a minute and try again.';
+  // The email provider refused or failed (e.g. Gmail's sending limit during a busy demo).
+  if (/error sending .*email|smtp|unable to send|email.*(send|deliver)/i.test(message))
+    return 'We couldn’t send the email right now. Wait a minute and try again.';
   if (/stanford\.edu|database error saving new user/i.test(message)) return 'Only @stanford.edu email addresses can sign up.';
   if (/signups not allowed/i.test(message)) return 'New sign-ups are turned off right now.';
   return 'Something went wrong. Please try again.';

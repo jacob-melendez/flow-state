@@ -14,6 +14,7 @@ import { Banner, Card, SectionTitle } from '../../src/ui/components';
 import { supportsReminders } from '../../src/platform';
 import { FriendsCard } from '../../src/ui/FriendsCard';
 import { PersonalizeCard } from '../../src/ui/PersonalizeCard';
+import { ComingSoonBanner } from '../../src/ui/ComingSoonBanner';
 import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { WaterBuddy } from '../../src/ui/WaterBuddy';
@@ -25,7 +26,7 @@ const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 /** The line under the ring: pace or safety first, otherwise the buddy's cheer. */
 function statusText(t: TodayAssessment, buddyCaption: string): string {
-  if (t.intake.level === 'warning') return 'That’s plenty. Take a break 🫧';
+  if (t.intake.level === 'warning') return 'That’s plenty. Take a break.';
   if (t.intake.level === 'caution') return 'Well past your goal. Ease off for now.';
   if (t.goalMet) return buddyCaption;
   if (t.pace === 'farBehind') return 'Far behind for this time of day. Time to catch up!';
@@ -84,7 +85,8 @@ export default function TodayScreen() {
     >
       <Text style={type.title}>Today</Text>
 
-      <View style={{ marginTop: spacing.lg }}>
+      <View style={{ marginTop: spacing.lg, gap: spacing.md }}>
+        <ComingSoonBanner />
         <PersonalizeCard />
       </View>
 

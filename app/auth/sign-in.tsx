@@ -6,11 +6,13 @@ import { sendCode } from '../../src/cloud/account';
 import { completeStanfordEmail, isStanfordEmail } from '../../src/cloud/email';
 import { Banner, Button, Card } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
+import { useCloseAuth } from '../../src/ui/useCloseAuth';
 import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 export default function SignInScreen() {
   const styles = useStyles();
   const { colors, type } = useTheme();
+  const close = useCloseAuth();
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -33,9 +35,8 @@ export default function SignInScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ModalHeader title="Sign in" action="Cancel" onAction={() => router.dismissAll()} />
+      <ModalHeader title="Sign in" action="Cancel" onAction={close} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.emoji}>☁️</Text>
         <Text style={type.title}>Back up your progress</Text>
         <Text style={styles.body}>
           Sign in with your Stanford email to keep your water log safe, use it on more than one device, and add friends.
@@ -81,7 +82,6 @@ export default function SignInScreen() {
 const useStyles = makeStyles((colors, type) =>
   StyleSheet.create({
   content: { ...READABLE_WIDTH, padding: spacing.lg, gap: spacing.lg },
-  emoji: { fontSize: 48 },
   body: { ...type.body, color: colors.muted, lineHeight: 23 },
   input: {
     fontSize: 18,

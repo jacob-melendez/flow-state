@@ -50,6 +50,9 @@ export interface Palette {
   ringGood: string;
   ringCaution: string;
   ringAlert: string;
+  /** QR codes: always dark modules on a light square (in both modes) so cameras can read them. */
+  qrDark: string;
+  qrLight: string;
 }
 
 /** Official Stanford brand colors, for reference (use the palette tokens in UI). */
@@ -89,6 +92,8 @@ export const palettes: Record<ColorScheme, Palette> = {
     ringGood: '#1E8A5A',
     ringCaution: '#AD7300',
     ringAlert: STANFORD.brightRed,
+    qrDark: '#000000',
+    qrLight: '#FFFFFF',
   },
   dark: {
     background: '#141312',
@@ -117,6 +122,8 @@ export const palettes: Record<ColorScheme, Palette> = {
     ringGood: '#6FD3A8',
     ringCaution: '#F4C04F',
     ringAlert: '#FF6B6B',
+    qrDark: '#000000',
+    qrLight: '#FFFFFF',
   },
 };
 

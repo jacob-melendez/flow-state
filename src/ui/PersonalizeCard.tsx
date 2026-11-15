@@ -16,7 +16,7 @@ export function PersonalizeCard() {
   if (calculatorProfile || personalizeDismissed) return null;
   return (
     <Card style={{ gap: spacing.md, marginBottom: spacing.lg }}>
-      <Text style={type.heading}>Personalize your goal ✨</Text>
+      <Text style={type.heading}>Personalize your goal</Text>
       <Text style={[type.body, { lineHeight: 22 }]}>
         Answer a few quick questions for a daily goal that fits you
         {supportsReminders ? ', and choose whether reminders stop once you reach it.' : '.'}

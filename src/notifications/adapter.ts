@@ -15,7 +15,7 @@ import {
   REMINDER_ID_PREFIX,
 } from '../config';
 import { PlannedReminder } from '../scheduling/buildSchedule';
-import { messageFor, messageForSlot } from './messages';
+import { REMINDER_MESSAGE, messageFor } from './messages';
 
 export type PermissionState = 'granted' | 'denied' | 'undetermined';
 
@@ -101,9 +101,10 @@ export async function applyPlan(plan: PlannedReminder[]): Promise<void> {
   await Promise.all(existing.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
   for (const r of plan) {
     const { title, body } = messageFor(r.kind, r.slotIndex);
+    // Regular reminders are title-only; `body` is left out rather than sent empty.
     await Notifications.scheduleNotificationAsync({
       identifier: r.id,
-      content: { title, body, sound: true, categoryIdentifier: NOTIFICATION_CATEGORY, data: { kind: r.kind } },
+      content: { title, ...(body ? { body } : {}), sound: true, categoryIdentifier: NOTIFICATION_CATEGORY, data: { kind: r.kind } },
       trigger: toTrigger(r),
     });
   }
@@ -111,10 +112,10 @@ export async function applyPlan(plan: PlannedReminder[]): Promise<void> {
 
 /** Sends a reminder in a few seconds so students can see what they look like. */
 export async function sendTestReminder(seconds = 10): Promise<void> {
-  const { title, body } = messageForSlot(0);
+  const { title } = REMINDER_MESSAGE;
   await Notifications.scheduleNotificationAsync({
     identifier: `test-${Date.now()}`,
-    content: { title, body, sound: true, categoryIdentifier: NOTIFICATION_CATEGORY, data: { kind: 'test' } },
+    content: { title, sound: true, categoryIdentifier: NOTIFICATION_CATEGORY, data: { kind: 'test' } },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
       seconds,

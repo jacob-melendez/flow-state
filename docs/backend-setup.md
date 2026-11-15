@@ -82,6 +82,8 @@ npx supabase db push
 
 By default Supabase emails a *link*. Flow State asks for a *code* instead, because it's easier on a phone and works with iOS code autofill.
 
+**Do step 4 first.** Supabase only lets you edit email templates once a custom email sender (SMTP) is set up; until then the template page says "Set up custom SMTP to edit templates". For testing, a personal Gmail account with an app password works (host `smtp.gmail.com`, port `465`); switch to a real sending domain before students use it.
+
 1. Go to **Authentication → Sign In / Providers**. Make sure **Email** is enabled and **Allow new users to sign up** is on.
 2. Go to **Authentication → Emails → Templates**.
 3. Edit the **Magic Link** template. Replace its body with something like this:

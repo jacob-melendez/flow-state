@@ -11,6 +11,7 @@ import { useSettings } from '../src/state/settingsStore';
 import { Button, Card } from '../src/ui/components';
 import { WaterEstimate } from '../src/domain/waterCalculator';
 import { CalculatorForm } from '../src/ui/CalculatorForm';
+import { ComingSoonBanner } from '../src/ui/ComingSoonBanner';
 import { ActiveHoursFields, AfterGoalField, GoalField, IntervalField } from '../src/ui/ReminderSettingsForm';
 import { READABLE_WIDTH, makeStyles, spacing, useTheme } from '../src/ui/theme';
 
@@ -68,12 +69,13 @@ export default function OnboardingScreen() {
               ? 'Staying hydrated helps your focus, mood and energy. We’ll send gentle reminders to drink water throughout your day, and you can track your cups toward a daily goal.'
               : 'Staying hydrated helps your focus, mood and energy. Track your cups toward a daily goal here, and get reminders with the Flow State app on your phone.'}
           </Text>
+          <ComingSoonBanner />
         </Step>
       );
       break;
     case 'about':
       content = (
-        <Step emoji="🧮" title="About you" subtitle="A few quick questions to set a daily water goal that fits you.">
+        <Step title="About you" subtitle="A few quick questions to set a daily water goal that fits you.">
           <CalculatorForm onEstimateChange={setEstimate} showBreakdown={false} />
         </Step>
       );
@@ -81,7 +83,6 @@ export default function OnboardingScreen() {
     case 'goal':
       content = (
         <Step
-          emoji="🎯"
           title="Your daily goal"
           subtitle={
             estimate
@@ -114,7 +115,6 @@ export default function OnboardingScreen() {
     case 'afterGoal':
       content = (
         <Step
-          emoji="🏁"
           title="After you reach your goal"
           subtitle="Do you still want reminders once you’ve hit your goal for the day?"
         >
@@ -126,7 +126,7 @@ export default function OnboardingScreen() {
       break;
     case 'notifications':
       content = (
-        <Step emoji="🔔" title="Turn on reminders" subtitle="Reminders need notification permission.">
+        <Step title="Turn on reminders" subtitle="Reminders need notification permission.">
           <Text style={styles.body}>
             Next, your phone will ask whether to allow notifications. Tap “Allow” so we can remind you to drink water.
             {cloudEnabled ? '' : ' Everything stays on your phone.'}
@@ -183,7 +183,7 @@ function Step({
   subtitle,
   children,
 }: {
-  emoji: string;
+  emoji?: string;
   title: string;
   subtitle?: string;
   children: ReactNode;
@@ -192,7 +192,7 @@ function Step({
   const { type } = useTheme();
   return (
     <View style={{ gap: spacing.lg }}>
-      <Text style={styles.emoji}>{emoji}</Text>
+      {emoji ? <Text style={styles.emoji}>{emoji}</Text> : null}
       <View style={{ gap: spacing.xs }}>
         <Text style={type.title}>{title}</Text>
         {subtitle ? <Text style={[type.caption, { fontSize: 15 }]}>{subtitle}</Text> : null}

@@ -4,15 +4,15 @@ SENSA Impact Labs Fall 2026, Health & Wellness Group (Stanford Flow State). This
 
 Flow State reminds Stanford students to drink water at the interval they choose (**every hour by default, anywhere from 15 minutes to 3 hours**) during their waking hours. Students can log cups toward a daily goal, watch their water buddy fill up, and build streaks with friends.
 
-It runs on **iPhone, Android and the web**. The website is a companion without reminders; see [docs/deploy-web.md](docs/deploy-web.md).
+It runs on **iPhone, Android and the web**. The website is a companion without reminders; see [docs/deploy-web.md](docs/deploy-web.md). For a live demo with the website, see [docs/demo.md](docs/demo.md).
 
 The app works fully offline. Students can optionally **sign in with their Stanford email** to back up their water log and use it on more than one phone. Reminder settings and calculator answers never leave the phone. Version 1 (tag `v1.0.0`) was entirely on-device.
 
 ## Features
 
-- **Interval reminders**: every hour by default. A scroll wheel (iOS) or picker (Android) sets anything from 15 minutes to 3 hours, in 15-minute steps.
+- **Interval reminders**: every hour by default. A scroll wheel (iOS) or picker (Android) sets anything from 15 minutes to 3 hours, in 15-minute steps. Every reminder is the same simple notification: "Take a Drink of Water💧".
 - **After the goal**: students choose whether reminders keep going once they reach their daily goal, or stop until tomorrow.
-- **Catch-up check-ins**: halfway and three-quarters through the active hours (e.g. 3 PM and 6 PM for 9 AM–9 PM), a "you're a bit behind" notification arrives only if the student is behind pace. Settings → Smart check-ins turns them off.
+- **Catch-up check-ins**: halfway and three-quarters through the active hours (e.g. 3 PM and 6 PM for 9 AM–9 PM), a "Time to catch up on water 🌊" notification arrives only if the student is behind pace. Settings → Smart check-ins turns them off.
 - **Take-a-break warnings**: if a student logs 4+ cups within an hour, or twice their daily need (the larger of their goal and their calculator estimate), the app tells them to take a break and pauses reminders (for an hour after fast drinking, until tomorrow after a very high total). Each warning shows at most once a day. The thresholds live in `src/domain/hydrationSafety.ts` for the health team to review. This is a gentle nudge, not medical advice.
 - **Ring colors by time of day**: the Today ring is green when the student is on track for the time of day, yellow when a bit behind or at 1.5× their need, and red when far behind or drinking too much. The water buddy looks dizzy when it's too much.
 - **Active hours**: reminders only arrive within a daily window, e.g. 9:00 AM–9:00 PM. The window can cross midnight.
@@ -122,6 +122,8 @@ Free Apple ID builds expire after 7 days; run the command again to reinstall. Re
 
 ### Later: TestFlight and the App Store
 
+The full launch checklist (website, App Store and Google Play, and the decisions to make first) is in [docs/release.md](docs/release.md).
+
 Once the team has an [Apple Developer Program](https://developer.apple.com/programs/) membership ($99/yr):
 
 ```bash
@@ -199,6 +201,8 @@ supabase/
   migrations/                Database tables, security rules (run once per Supabase project)
   tests/                     Database tests (npm run test:db)
 docs/backend-setup.md        Step-by-step Supabase setup, and how to view impact stats
+docs/release.md              Launch checklist: website, App Store, Google Play
+docs/demo.md                 Demo day: deploy the website, Supabase limits, dry run
 docs/android.md              Testing on Android, APK builds, Google Play
 docs/deploy-web.md           Building and hosting the website
 scripts/render-icons.mjs     Regenerates the app icons from the water-buddy artwork
