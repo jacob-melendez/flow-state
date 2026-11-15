@@ -4,7 +4,7 @@ SENSA Impact Labs Fall 2026, Health & Wellness Group (Stanford Flow State). This
 
 Flow State reminds Stanford students to drink water at the interval they choose (**every hour by default, anywhere from 15 minutes to 3 hours**) during their waking hours. Students can log cups toward a daily goal, watch their water buddy fill up, and build streaks with friends.
 
-It runs on **iPhone, Android and the web**. The website is a companion without reminders; see [docs/deploy-web.md](docs/deploy-web.md).
+It runs on **iPhone, Android and the web**. The website is a companion without reminders; see [docs/deploy-web.md](docs/deploy-web.md). For a live demo with the website, see [docs/demo.md](docs/demo.md).
 
 The app works fully offline. Students can optionally **sign in with their Stanford email** to back up their water log and use it on more than one phone. Reminder settings and calculator answers never leave the phone. Version 1 (tag `v1.0.0`) was entirely on-device.
 
@@ -202,6 +202,7 @@ supabase/
   tests/                     Database tests (npm run test:db)
 docs/backend-setup.md        Step-by-step Supabase setup, and how to view impact stats
 docs/release.md              Launch checklist: website, App Store, Google Play
+docs/demo.md                 Demo day: deploy the website, Supabase limits, dry run
 docs/android.md              Testing on Android, APK builds, Google Play
 docs/deploy-web.md           Building and hosting the website
 scripts/render-icons.mjs     Regenerates the app icons from the water-buddy artwork

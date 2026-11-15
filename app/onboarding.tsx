@@ -11,6 +11,7 @@ import { useSettings } from '../src/state/settingsStore';
 import { Button, Card } from '../src/ui/components';
 import { WaterEstimate } from '../src/domain/waterCalculator';
 import { CalculatorForm } from '../src/ui/CalculatorForm';
+import { ComingSoonBanner } from '../src/ui/ComingSoonBanner';
 import { ActiveHoursFields, AfterGoalField, GoalField, IntervalField } from '../src/ui/ReminderSettingsForm';
 import { READABLE_WIDTH, makeStyles, spacing, useTheme } from '../src/ui/theme';
 
@@ -68,6 +69,7 @@ export default function OnboardingScreen() {
               ? 'Staying hydrated helps your focus, mood and energy. We’ll send gentle reminders to drink water throughout your day, and you can track your cups toward a daily goal.'
               : 'Staying hydrated helps your focus, mood and energy. Track your cups toward a daily goal here, and get reminders with the Flow State app on your phone.'}
           </Text>
+          <ComingSoonBanner />
         </Step>
       );
       break;

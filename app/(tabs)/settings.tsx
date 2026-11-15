@@ -112,7 +112,7 @@ export default function SettingsScreen() {
       ) : (
         <>
           <SectionTitle>Reminders</SectionTitle>
-          <GetTheAppCard />
+          <GetTheAppCard showTestNotification />
         </>
       )}
 

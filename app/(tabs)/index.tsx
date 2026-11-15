@@ -14,6 +14,7 @@ import { Banner, Card, SectionTitle } from '../../src/ui/components';
 import { supportsReminders } from '../../src/platform';
 import { FriendsCard } from '../../src/ui/FriendsCard';
 import { PersonalizeCard } from '../../src/ui/PersonalizeCard';
+import { ComingSoonBanner } from '../../src/ui/ComingSoonBanner';
 import { GetTheAppCard } from '../../src/ui/GetTheAppCard';
 import { ProgressRing } from '../../src/ui/ProgressRing';
 import { WaterBuddy } from '../../src/ui/WaterBuddy';
@@ -84,7 +85,8 @@ export default function TodayScreen() {
     >
       <Text style={type.title}>Today</Text>
 
-      <View style={{ marginTop: spacing.lg }}>
+      <View style={{ marginTop: spacing.lg, gap: spacing.md }}>
+        <ComingSoonBanner />
         <PersonalizeCard />
       </View>
 

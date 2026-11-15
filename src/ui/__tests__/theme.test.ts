@@ -52,6 +52,8 @@ const PAIRS: [Key, Key, number][] = [
   ['success', 'background', 4.5],
   ['warning', 'background', 4.5],
   ['danger', 'background', 4.5],
+  // QR codes (scanners need strong contrast; kept black on white in both modes)
+  ['qrDark', 'qrLight', 7],
 ];
 
 describe.each(['light', 'dark'] as const)('%s palette', (scheme) => {

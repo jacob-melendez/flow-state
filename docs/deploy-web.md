@@ -47,12 +47,12 @@ Upload or connect the repo with:
 - **output folder:** `dist`.
 
 Because it's a single-page app, every path must serve `index.html`:
-- **Netlify:** add a file `public/_redirects` containing `/*  /index.html  200` (Expo copies `public/` into `dist/`).
+- **Netlify:** `public/_redirects` (already in the repo) contains `/*  /index.html  200`; Expo copies `public/` into `dist/`.
 - **Vercel:** add `vercel.json` with `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }`.
 
 ## After the first deploy
 
-1. Put the site's address in `src/config.ts` → `WEB_URL`, e.g. `"https://flowstate.expo.app"`. Friend invites then include a link like `https://flowstate.expo.app/add-friend/K7MNP2Q9`, which opens the Add friends screen with the code filled in, for anyone, with or without the app.
+1. Put the site's address in `src/config.ts` → `WEB_URL`, e.g. `"https://flowstate.expo.app"`. The website already uses its own address for invite links and QR codes; this setting is for the **phone apps**, so their invites and "Scan to add me" QR include a web link like `https://flowstate.expo.app/?add=K7MNP2Q9`. That link opens the Add friends screen with the code filled in, for anyone, with or without the app. (It uses `?add=` on the home page so it works on any host, even without single-page-app rewrites.)
 2. Once the apps are published, set `APP_STORE_URL` and `PLAY_STORE_URL` in `src/config.ts`, so the website's "Reminders live on your phone" card links to them.
 3. Rebuild and redeploy.
 

@@ -97,6 +97,21 @@ export const PLAY_STORE_URL: string | null = null;
 /**
  * Public URL of the Flow State website (no trailing slash), e.g.
  * "https://flowstate.example.org". When set, friend invites include a web link
- * (https://…/add-friend/CODE) that works for anyone, with or without the app.
+ * (https://…/?add=CODE) that works for anyone, with or without the app.
+ * The website itself doesn't need this: it uses its own address (see webBaseUrl).
  */
+/** How often the open Friends tab checks for new requests and friends' cups. */
+export const FRIENDS_REFRESH_MS = 15_000;
+
 export const WEB_URL: string | null = null;
+
+/**
+ * The website's address for invite links and QR codes: WEB_URL if set,
+ * otherwise (on the website) the address it's being served from. Null in the
+ * phone apps until WEB_URL is set.
+ */
+export function webBaseUrl(): string | null {
+  if (WEB_URL) return WEB_URL.replace(/\/+$/, '');
+  if (typeof window !== 'undefined' && window.location?.origin?.startsWith('http')) return window.location.origin;
+  return null;
+}

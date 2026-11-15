@@ -4,6 +4,7 @@ import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAccount } from '../../src/cloud/account';
+import { FRIENDS_REFRESH_MS } from '../../src/config';
 import { isWeb } from '../../src/platform';
 import { FriendRow, removeFriend, respondToRequest, useFriends } from '../../src/cloud/friends';
 import { BackendSetupHint } from '../../src/ui/BackendSetupHint';
@@ -20,9 +21,16 @@ export default function FriendsScreen() {
 
   // Refresh whenever the tab is opened, and as soon as a restored login finishes
   // loading (the tab can be opened before that happens).
+  // While the tab is open, keep checking so new requests and today's cups show
+  // up without leaving the screen (e.g. on a projector during a demo).
   useFocusEffect(
     useCallback(() => {
       refresh();
+      const timer = setInterval(() => {
+        const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
+        if (!hidden && useAccount.getState().status === 'signed-in') refresh();
+      }, FRIENDS_REFRESH_MS);
+      return () => clearInterval(timer);
     }, [refresh]),
   );
   useEffect(() => {
@@ -139,7 +147,12 @@ export default function FriendsScreen() {
 
         {friends.length > 0 ? (
           <Text style={[type.caption, { marginTop: spacing.md, textAlign: 'center' }]}>
-            Friends see your name, today’s cups and your streak.{isWeb ? '' : ' Pull down to refresh.'}
+            Friends see your name, today’s cups and your streak.{isWeb ? ' ' : ' Pull down to refresh.'}
+            {isWeb ? (
+              <Text accessibilityRole="button" onPress={() => refresh()} style={styles.inlineLink}>
+                Refresh
+              </Text>
+            ) : null}
           </Text>
         ) : null}
       </>
@@ -253,6 +266,7 @@ const useStyles = makeStyles((colors, type) =>
   content: { ...READABLE_WIDTH, padding: spacing.lg, paddingBottom: spacing.xxl },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   addLink: { color: colors.primaryText, fontSize: 17, fontWeight: '700', padding: spacing.xs },
+  inlineLink: { color: colors.primaryText, fontWeight: '700' },
   bigEmoji: { fontSize: 40 },
   muted: { ...type.body, color: colors.muted, lineHeight: 22 },
   requestButtons: { flexDirection: 'row', gap: spacing.sm },

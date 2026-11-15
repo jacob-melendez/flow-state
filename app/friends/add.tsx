@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Share, Text, TextInput, View, StyleSheet } from 'react-native';
 
 import { useAccount } from '../../src/cloud/account';
-import { WEB_URL } from '../../src/config';
+import { webBaseUrl } from '../../src/config';
 import { completeStanfordEmail, isStanfordEmail } from '../../src/cloud/email';
-import { formatFriendCode, friendShareMessage, isValidFriendCode } from '../../src/cloud/friendCode';
+import { formatFriendCode, friendShareMessage, isValidFriendCode, webInviteLink } from '../../src/cloud/friendCode';
 import { sendFriendRequest } from '../../src/cloud/friends';
 import { Banner, Button, Card, SectionTitle } from '../../src/ui/components';
 import { ModalHeader } from '../../src/ui/ModalHeader';
+import { QrCode } from '../../src/ui/QrCode';
 import { READABLE_WIDTH, makeStyles, radius, spacing, useTheme } from '../../src/ui/theme';
 
 type Result = { ok: boolean; message: string } | null;
@@ -26,6 +27,8 @@ export default function AddFriendScreen() {
   const [copied, setCopied] = useState(false);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/friends'));
+  const site = webBaseUrl();
+  const inviteUrl = friendCode && site ? webInviteLink(friendCode, site) : null;
 
   if (status !== 'signed-in') {
     return (
@@ -34,7 +37,7 @@ export default function AddFriendScreen() {
         <View style={styles.content}>
           <Text style={type.heading}>Sign in to add friends</Text>
           {params.code ? (
-            <Text style={styles.muted}>Your friend’s code is {formatFriendCode(params.code)}. Sign in, then come back to add them.</Text>
+            <Text style={styles.muted}>Your friend’s code is {formatFriendCode(params.code)}. Sign in and you’ll come right back here to add them.</Text>
           ) : null}
           <Button label="Sign in" onPress={() => router.push('/auth/sign-in')} />
         </View>
@@ -65,7 +68,7 @@ export default function AddFriendScreen() {
 
   const share = async () => {
     if (!friendCode) return;
-    const message = friendShareMessage(friendCode, WEB_URL);
+    const message = friendShareMessage(friendCode, webBaseUrl());
     // Browsers without a share sheet (most desktops) copy the invite instead.
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && !navigator.share) {
       try {
@@ -101,6 +104,26 @@ export default function AddFriendScreen() {
             </Text>
           ) : null}
         </Card>
+
+        {friendCode ? (
+          <Card style={{ alignItems: 'center', gap: spacing.sm }}>
+            <Text style={type.heading}>Scan to add me</Text>
+            {inviteUrl ? (
+              <>
+                <View style={styles.qrFrame}>
+                  <QrCode value={inviteUrl} size={208} label="QR code to add you as a friend" />
+                </View>
+                <Text style={[type.caption, { textAlign: 'center' }]}>
+                  Friends scan this with their phone camera to open Flow State with your code filled in.
+                </Text>
+              </>
+            ) : (
+              <Text style={[type.caption, { textAlign: 'center' }]}>
+                Your QR code appears here once the Flow State website address is set in the app.
+              </Text>
+            )}
+          </Card>
+        ) : null}
 
         <SectionTitle>Add by friend code</SectionTitle>
         <Card style={{ gap: spacing.sm }}>
@@ -174,4 +197,5 @@ const useStyles = makeStyles((colors, type) =>
     paddingVertical: spacing.md,
   },
   codeInput: { fontSize: 22, fontWeight: '700', letterSpacing: 2, textAlign: 'center' },
+  qrFrame: { padding: spacing.sm, borderRadius: radius.md, backgroundColor: colors.qrLight },
 }));

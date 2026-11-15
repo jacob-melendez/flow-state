@@ -20,13 +20,41 @@ export function formatFriendCode(code: string): string {
 }
 
 /**
+ * Web invite link: the site's home page with ?add=CODE. A query on the home
+ * page works on every static host (deep paths need host rewrites); the app
+ * turns it into the Add friends screen with the code filled in.
+ */
+export function webInviteLink(code: string, webUrl: string): string {
+  return `${webUrl.replace(/\/+$/, '')}/?add=${normalizeFriendCode(code)}`;
+}
+
+/**
  * Text for the Share sheet. With the website's address, the invite also has a
  * web link that works for anyone; the app link opens the installed app.
  */
 export function friendShareMessage(code: string, webUrl: string | null = null): string {
   const c = normalizeFriendCode(code);
   const lines = [`Add me on Flow State and let's stay hydrated together! 💧`, `My friend code: ${formatFriendCode(code)}`];
-  if (webUrl) lines.push(`${webUrl.replace(/\/+$/, '')}/add-friend/${c}`);
+  if (webUrl) lines.push(webInviteLink(c, webUrl));
   lines.push(`${INVITE_LINK_PREFIX}${c}`);
   return lines.join('\n');
+}
+
+let inviteTaken = false;
+
+/**
+ * On the website, the friend code from a ?add=CODE invite link, once per page
+ * load (so closing Add friends doesn't reopen it). Null elsewhere.
+ */
+export function takeWebInviteCode(search: string | null = typeof window !== 'undefined' ? window.location?.search ?? null : null): string | null {
+  if (inviteTaken || !search) return null;
+  const raw = new URLSearchParams(search).get('add');
+  if (!raw || !isValidFriendCode(raw)) return null;
+  inviteTaken = true;
+  return normalizeFriendCode(raw);
+}
+
+/** For tests. */
+export function resetWebInviteForTests(): void {
+  inviteTaken = false;
 }

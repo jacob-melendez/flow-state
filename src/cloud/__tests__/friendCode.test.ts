@@ -1,4 +1,12 @@
-import { formatFriendCode, friendShareMessage, isValidFriendCode, normalizeFriendCode } from '../friendCode';
+import {
+  formatFriendCode,
+  friendShareMessage,
+  isValidFriendCode,
+  normalizeFriendCode,
+  resetWebInviteForTests,
+  takeWebInviteCode,
+  webInviteLink,
+} from '../friendCode';
 
 describe('friend codes', () => {
   it('normalizes what students type', () => {
@@ -29,7 +37,27 @@ describe('friend codes', () => {
 
   it('adds a web link when the website address is known', () => {
     const msg = friendShareMessage('abcd-efgh', 'https://flowstate.example.org/');
-    expect(msg).toContain('https://flowstate.example.org/add-friend/ABCDEFGH');
+    expect(msg).toContain('https://flowstate.example.org/?add=ABCDEFGH');
     expect(msg).toContain('flowstate://add-friend/ABCDEFGH');
+  });
+});
+
+describe('web invite links', () => {
+  beforeEach(resetWebInviteForTests);
+
+  it('builds a home-page link with ?add=CODE', () => {
+    expect(webInviteLink('k7mn-p2q9', 'https://flowstate.expo.app/')).toBe('https://flowstate.expo.app/?add=K7MNP2Q9');
+  });
+
+  it('reads the code once per page load', () => {
+    expect(takeWebInviteCode('?add=k7mn-p2q9')).toBe('K7MNP2Q9');
+    expect(takeWebInviteCode('?add=K7MNP2Q9')).toBeNull();
+  });
+
+  it('ignores missing or invalid codes', () => {
+    expect(takeWebInviteCode('')).toBeNull();
+    expect(takeWebInviteCode('?add=nope')).toBeNull();
+    expect(takeWebInviteCode('?other=1')).toBeNull();
+    expect(takeWebInviteCode('?add=K7MNP2Q9')).toBe('K7MNP2Q9');
   });
 });
